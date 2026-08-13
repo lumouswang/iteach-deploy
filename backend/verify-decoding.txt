@@ -1,0 +1,12 @@
+﻿Total bytes: 11436
+First 80 bytes hex: 7b0d0a2020226964223a202273616c745f6c616b655f666f7373696c222c0d0a20202276657273696f6e223a2022312e30222c0d0a202022636173655f7469746c65223a2022e79b90e6b996e5b2b8e8
+
+GBK decode FAILED: 'gbk' codec can't decode byte 0xb3 in position 90: illegal multibyte sequence
+
+GBK replace, first 200 chars:
+'{\r\n  "id": "salt_lake_fossil",\r\n  "version": "1.0",\r\n  "case_title": "閻╂劖绠瑰畝姝岀珶閻ㄥ嫬瀵查惌锟?,\r\n  "subtitle": "鐏炶精銈挎潻鎰厔閻╂劖绠归弰锟介崶钘夛拷鍓侀獓閼凤拷閻掓湹绻氶幎銈呭隘閵嗗倷绔寸紘銈夌彯娑擄拷鐎涳妇鏁撻崜宥呯窔闁插骸锟芥牞锟藉啫鐧傞敍灞藉磵闂傛潙婀惄鎰摋娑撳﹣绱ら幁锟介妴鍌氱敨闂冪喕锟戒礁绗€闂呭繑澧滈幑陇鎹ｆ稉锟介崸妞硷拷宀冪婢瑰磭濮搁惌鍐层仈閵嗗秷锟解晛锟斤妇鏁撴潏銊拷銈冿拷鍌氾拷'
+
+U+FFFD count: 409
+U+0080-U+00FF count (mojibake chars): 14
+Total chars: 6890
+Mojibake ratio: 0.0020319303338171262

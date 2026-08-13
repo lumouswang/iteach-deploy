@@ -1,0 +1,233 @@
+{
+  "version": "1.0",
+  "case_id": "salt_lake_fossil",
+  "cards": [
+    {
+      "id": "G1_xuxiake",
+      "name": "徐霞客",
+      "title": "踏勘·地貌溯源",
+      "category": "环境变量类",
+      "skill_name": "踏勘·地貌溯源",
+      "skill_text": "调用地理学视角，观察盐湖地貌形成与气象条件。",
+      "subject": "地理",
+      "max_use": 2,
+      "combo_partner": "G2_shenkuo",
+      "combo_unlock_layer": 1,
+      "exam_tags": [
+        "地理·地貌成因",
+        "地理·气候类型",
+        "地理·蒸发与降水"
+      ],
+      "clues": [
+        {
+          "id": "clue_geo_closed_basin",
+          "label": "运城盐湖是内陆封闭盆地",
+          "content": "运城盐湖位于汾渭地堑东端，是典型的内陆封闭汇水盆地，湖水只进不出，长期蒸发浓缩形成高矿化度盐湖。",
+          "knowledge_point": "封闭盆地与盐湖形成"
+        },
+        {
+          "id": "clue_geo_evap_precip",
+          "label": "蒸发量远大于降水量",
+          "content": "运城盆地年均蒸发量约 2000 mm，是年均降水量（约 500 mm）的 4 倍。长期正蒸发差是盐类析出的根本动力。",
+          "knowledge_point": "蒸发与降水差对盐湖演化的控制"
+        }
+      ],
+      "thinking_view": "环境-地貌视角",
+      "badge_icon": "🗺️"
+    },
+    {
+      "id": "G2_shenkuo",
+      "name": "沈括",
+      "title": "考辨·史料反证",
+      "category": "环境变量类",
+      "skill_name": "考辨·史料反证",
+      "skill_text": "调用文献与史料视角，对'石头是化石'的猜想进行反证。",
+      "subject": "地理 + 历史",
+      "max_use": 2,
+      "combo_partner": "G1_xuxiake",
+      "combo_unlock_layer": 1,
+      "exam_tags": [
+        "历史·史料实证",
+        "地理·古环境重建"
+      ],
+      "clues": [
+        {
+          "id": "clue_history_no_fossil_record",
+          "label": "运城地区无对应化石地质记录",
+          "content": "《梦溪笔谈》及现代地质考察均未记载运城盐湖周边存在同时代海洋生物化石层，可证'贝壳印'非古生物来源。",
+          "knowledge_point": "史料实证与古环境重建"
+        },
+        {
+          "id": "clue_history_modern_salt_mining",
+          "label": "史料多记盐池晒盐工艺",
+          "content": "《水经注》《新唐书·食货志》均载运城盐湖'集工采盐'、'垦畦晒盐'，反映其为盐田而非化石产地。",
+          "knowledge_point": "史料与产业地理"
+        }
+      ],
+      "thinking_view": "史料-考辨视角",
+      "badge_icon": "📜"
+    },
+    {
+      "id": "G3_zuchongzhi",
+      "name": "祖冲之",
+      "title": "推演·盐类析出序列",
+      "category": "物质类",
+      "skill_name": "推演·盐类析出序列",
+      "skill_text": "调用数学视角，推演盐类按溶解度依次析出的先后顺序。",
+      "subject": "数学 + 化学",
+      "max_use": 2,
+      "combo_partner": "G4_lishizhen",
+      "combo_unlock_layer": 3,
+      "exam_tags": [
+        "数学·序列与不等式",
+        "化学·溶解度与结晶"
+      ],
+      "clues": [
+        {
+          "id": "clue_chem_solubility_order",
+          "label": "盐类按溶解度顺序析出",
+          "content": "石膏（CaSO₄·2H₂O）溶解度先达饱和先析出，之后是岩盐（NaCl），最后是钾镁盐。这一序列称为'盐类析出序列'。",
+          "knowledge_point": "盐湖的盐类析出序列"
+        },
+        {
+          "id": "clue_math_log_precip",
+          "label": "盐类浓度累积近似对数增长",
+          "content": "随蒸发率增大，盐湖卤水盐度呈近似对数函数增长；可用 log 模型粗估析盐阶段。",
+          "knowledge_point": "对数模型与盐湖演化"
+        }
+      ],
+      "thinking_view": "数学-推演视角",
+      "badge_icon": "📐"
+    },
+    {
+      "id": "G4_lishizhen",
+      "name": "李时珍",
+      "title": "辨药·生命体征",
+      "category": "物质类",
+      "skill_name": "辨药·生命体征",
+      "skill_text": "调用生物学视角，反证'石头非化石'，并解释嗜盐菌等生命现象。",
+      "subject": "生物 + 化学",
+      "max_use": 2,
+      "combo_partner": "G3_zuchongzhi",
+      "combo_unlock_layer": 3,
+      "exam_tags": [
+        "生物·生物矿化",
+        "生物·化石标准",
+        "生物·嗜盐菌与渗透压"
+      ],
+      "clues": [
+        {
+          "id": "clue_bio_fossil_definition",
+          "label": "化石需具生物体结构与年代",
+          "content": "化石是地质历史时期生物的遗体、遗迹或印模，需有原生物体结构并经历成岩作用。盐湖'白色结晶'无任何生物结构。",
+          "knowledge_point": "化石的判定标准"
+        },
+        {
+          "id": "clue_bio_halophile",
+          "label": "嗜盐菌可在高盐环境生存",
+          "content": "盐湖卤水中存在大量嗜盐古菌（如 Halobacterium），其细胞内 K⁺ 浓度极高以平衡外部渗透压。",
+          "knowledge_point": "嗜盐菌与渗透压调节"
+        }
+      ],
+      "thinking_view": "生物-辨药视角",
+      "badge_icon": "🌿"
+    },
+    {
+      "id": "G5_mozi",
+      "name": "墨子",
+      "title": "穷理·物性推演",
+      "category": "力学系统类",
+      "skill_name": "穷理·物性推演",
+      "skill_text": "调用物理视角，推演蒸发、毛细、辐射的能量传递。",
+      "subject": "物理",
+      "max_use": 2,
+      "combo_partner": "G6_songyingxing",
+      "combo_unlock_layer": 2,
+      "exam_tags": [
+        "物理·蒸发吸热",
+        "物理·毛细现象",
+        "物理·辐射冷却"
+      ],
+      "clues": [
+        {
+          "id": "clue_phys_evap_cooling",
+          "label": "蒸发吸热使卤水温度下降",
+          "content": "水蒸发焓约 2260 kJ/kg，卤水表面持续蒸发会带走热量，使卤水温度略低于气温。",
+          "knowledge_point": "蒸发与潜热"
+        },
+        {
+          "id": "clue_phys_capillary",
+          "label": "毛细作用驱动盐水上涌",
+          "content": "盐湖浅滩毛细孔径 μm 级，毛细力将地下卤水抽吸至地表，蒸发后形成盐霜、盐花。",
+          "knowledge_point": "毛细现象与盐湖地貌"
+        }
+      ],
+      "thinking_view": "物理-穷理视角",
+      "badge_icon": "⚙️"
+    },
+    {
+      "id": "G6_songyingxing",
+      "name": "宋应星",
+      "title": "考工·工艺溯源",
+      "category": "力学系统类",
+      "skill_name": "考工·工艺溯源",
+      "skill_text": "调用数学建模视角，对盐湖析晶过程进行量化。",
+      "subject": "数学",
+      "max_use": 2,
+      "combo_partner": "G5_mozi",
+      "combo_unlock_layer": 2,
+      "exam_tags": [
+        "数学·函数建模",
+        "物理·饱和蒸气压"
+      ],
+      "clues": [
+        {
+          "id": "clue_math_crystal_model",
+          "label": "析晶速率函数拟合",
+          "content": "盐湖日析盐量 M(t) ≈ k·(E-P)·A·t，其中 E 为蒸发量、P 为降水量、A 为盐田面积。",
+          "knowledge_point": "盐田产能数学建模"
+        },
+        {
+          "id": "clue_phys_sat_vapor",
+          "label": "饱和蒸气压随温度升高",
+          "content": "Clausius-Clapeyron 关系：饱和蒸气压随温度指数上升，故高温蒸发远强于低温。",
+          "knowledge_point": "饱和蒸气压与温度"
+        }
+      ],
+      "thinking_view": "数学-建模视角",
+      "badge_icon": "📊"
+    },
+    {
+      "id": "G7_xuguangqi",
+      "name": "徐光启",
+      "title": "会通·终极合技",
+      "category": "综合类",
+      "skill_name": "会通·终极合技",
+      "skill_text": "调用跨学科综合视角，融汇前六将线索，给出汤底终极解释。",
+      "subject": "综合",
+      "max_use": 2,
+      "combo_partner": "G1_xuxiake",
+      "combo_unlock_layer": 4,
+      "exam_tags": [
+        "综合·跨学科整合",
+        "科学·科学论证"
+      ],
+      "clues": [
+        {
+          "id": "clue_synth_unified_explanation",
+          "label": "跨学科验证框架",
+          "content": "地理(盆地+蒸发)、化学(溶解度+结晶)、生物(化石标准+嗜盐菌)、物理(蒸发吸热+毛细)、数学(序列+对数拟合) 五个学科互相印证，才能锁定汤底。",
+          "knowledge_point": "跨学科综合分析"
+        },
+        {
+          "id": "clue_synth_pedagogy",
+          "label": "科学论证规范",
+          "content": "从观察到机制、从现象到本质，每一步都需有证据支撑，不可凭直觉跳步推理。本题所有线索共同指向同一解释。",
+          "knowledge_point": "科学方法论"
+        }
+      ],
+      "thinking_view": "综合-会通视角",
+      "badge_icon": "🌐"
+    }
+  ]
+}

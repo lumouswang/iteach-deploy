@@ -1,0 +1,139 @@
+{
+  "meta": {
+    "title": "运城盐湖·通关挑战",
+    "subtitle": "6 道题 × 5 个能力层 × 4 个合技层",
+    "version": "1.0",
+    "trigger": "allLayersUnlocked",
+    "passingScore": 4,
+    "designPrinciple": "每题对应一个能力层 + 一个 KP，错题可追溯到学习页"
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "type": "choice",
+      "abilityLayer": "L1",
+      "linkedLayer": "phenomenon",
+      "linkedKp": "盐湖化学沉积类型",
+      "stem": "下列哪种岩石属于典型的盐湖化学沉积？",
+      "options": [
+        { "key": "A", "text": "花岗岩" },
+        { "key": "B", "text": "石灰岩" },
+        { "key": "C", "text": "芒硝岩（含 Na₂SO₄·10H₂O）" },
+        { "key": "D", "text": "玄武岩" }
+      ],
+      "answer": "C",
+      "explanation": "芒硝（Na₂SO₄·10H₂O）是盐湖卤水蒸发结晶的化学沉积岩，典型特征是含 10 个结晶水。",
+      "hint": "回想\"现象层\"揭示的白色结晶是什么？花岗岩、玄武岩是岩浆岩；石灰岩是生物化学沉积但不是盐湖特有。",
+      "learnRoute": "/learn/盐湖化学沉积"
+    },
+    {
+      "id": "q2",
+      "type": "ordering",
+      "abilityLayer": "L2",
+      "linkedLayer": "condition",
+      "linkedKp": "芒硝昼夜析出循环",
+      "stem": "把芒硝昼夜析出循环按正确顺序排列（5 步）：",
+      "items": [
+        { "id": "s1", "text": "夜晚温度下降（<32.4°C）" },
+        { "id": "s2", "text": "芒硝溶解度急剧降低" },
+        { "id": "s3", "text": "Na₂SO₄·10H₂O 结晶析出" },
+        { "id": "s4", "text": "石头表面长出\"白毛\"" },
+        { "id": "s5", "text": "午间温度回升（>32.4°C）" }
+      ],
+      "correctOrder": ["s1", "s2", "s3", "s4", "s5"],
+      "directionHints": {
+        "s1": "正确起点",
+        "s2": "紧随 s1 之后",
+        "s3": "原因导致结果",
+        "s4": "肉眼可见的现象",
+        "s5": "循环收尾"
+      },
+      "explanation": "芒硝溶解度在 32.4°C 是转折点（特殊例外）。低于此温度降温 → 析出 → 形成\"白毛\"；高温则反向溶解。",
+      "learnRoute": "/learn/condition"
+    },
+    {
+      "id": "q3",
+      "type": "judge",
+      "abilityLayer": "L3",
+      "linkedLayer": "microscopic",
+      "linkedKp": "溶解度温度曲线",
+      "stem": "如果温度升高到 40°C 但仍在盐湖中，下列哪种现象最可能发生？",
+      "options": [
+        { "key": "A", "text": "芒硝立即大量结晶析出" },
+        { "key": "B", "text": "芒硝溶解度降低，沉淀显著增加" },
+        { "key": "C", "text": "芒硝溶解度反常升高，结晶被溶解" },
+        { "key": "D", "text": "盐湖完全干涸" }
+      ],
+      "answer": "C",
+      "explanation": "芒硝在 32.4°C 是溶解度曲线的拐点：低于 32.4°C 降温反而析出；高于 32.4°C 升温溶解度升高、结晶溶解。这是少数几个\"反向温度系数\"的盐类。",
+      "hint": "回想 32.4°C 这个魔数字——为什么\"白毛\"在中午消失？",
+      "learnRoute": "/learn/microscopic"
+    },
+    {
+      "id": "q4",
+      "type": "fillEquation",
+      "abilityLayer": "L3",
+      "linkedLayer": "microscopic",
+      "linkedKp": "酸碱反应",
+      "stem": "补全化学方程式：CaCO₃ + 2CH₃COOH → ? + H₂O + ?↑",
+      "blanks": [
+        { "id": "b1", "answer": "Ca(CH₃COO)₂", "altAnswers": ["Ca(CH3COO)2", "醋酸钙"], "placeholder": "产物 1" },
+        { "id": "b2", "answer": "CO₂", "altAnswers": ["CO2", "二氧化碳"], "placeholder": "气体" }
+      ],
+      "explanation": "CaCO₃ + 2CH₃COOH → Ca(CH₃COO)₂ + H₂O + CO₂↑ —— 酸碱反应释放 CO₂ 冒泡，碳酸钙被消耗。",
+      "hint": "回想\"微观层\"剧情：白醋抹上去石头冒泡——是什么气体？醋酸根去了哪？",
+      "learnRoute": "/learn/microscopic"
+    },
+    {
+      "id": "q5",
+      "abilityLayer": "L4",
+      "type": "shortAnswer",
+      "linkedLayer": "ultimate",
+      "linkedKp": "《天工开物》泼硝工艺",
+      "stem": "《天工开物》记载\"泼硝\"工艺（夏秋灌卤、冬春扫硝）。请结合本关知识解释：古人为何选夏秋灌卤、冬春扫硝？",
+      "sampleAnswer": "芒硝在 32.4°C 以下溶解度随温度降低而急剧下降。冬春气温低于 32.4°C，卤水蒸发降温后芒硝结晶析出，可扫集；夏秋温度高于 32.4°C，芒硝溶解度回升，新卤灌入有利于持续形成饱和卤水。",
+      "keyPoints": [
+        "芒硝溶解度在 32.4°C 是转折点",
+        "冬春低温 → 芒硝结晶析出可扫集",
+        "夏秋高温 → 芒硝溶解度回升，持续产卤"
+      ],
+      "explanation": "古人虽不知道化学式，但通过观察掌握了\"冬扫夏灌\"的时节规律，与现代化学原理完全吻合。",
+      "learnRoute": "/learn/ultimate"
+    },
+    {
+      "id": "q6",
+      "type": "openEnded",
+      "abilityLayer": "L5",
+      "linkedLayer": "ultimate",
+      "linkedKp": "化石鉴别方法论",
+      "stem": "如果你是盐湖研究员，会用什么方法判断一块\"贝壳印\"是否含真化石？",
+      "sampleAnswer": "酸溶测试：滴稀盐酸观察是否冒泡。真化石（CaCO₃ 壳）会冒 CO₂；印模（盐湖结核）不会冒泡。或结合显微镜观察内部结构：真化石保留有机纹理；印模只有盐类结晶。",
+      "evaluationCriteria": [
+        "提到酸溶测试（识别 CaCO₃）",
+        "提到显微镜观察（识别内部结构）",
+        "提到与已知的盐湖结核特征对比"
+      ],
+      "commonMistakes": [
+        "只说\"看颜色\"\"看形状\"——主观判断，容易误判",
+        "想用火烤——会破坏样品",
+        "直接敲开看——破坏性检测，不规范"
+      ],
+      "learnRoute": "/learn/ultimate"
+    }
+  ],
+  "grading": {
+    "rules": {
+      "q1": { "correct": 1, "wrong": 0 },
+      "q2": { "allCorrect": 2, "partial": 1, "wrong": 0 },
+      "q3": { "correct": 1, "wrong": 0 },
+      "q4": { "allCorrect": 2, "partial": 1, "wrong": 0 },
+      "q5": { "allCorrect": 2, "partial": 1, "wrong": 0 },
+      "q6": { "allCorrect": 2, "partial": 1, "wrong": 0 }
+    },
+    "tiers": [
+      { "minScore": 8, "title": "🏆 运城盐湖·化石猎人", "color": "#ff6b35", "reward": "+50 出战分数", "icon": "🏆" },
+      { "minScore": 5, "title": "🔍 盐湖探索者", "color": "#4a90e2", "reward": "复习提示", "icon": "🔍" },
+      { "minScore": 0, "title": "🌱 仍需努力", "color": "#95a5a6", "reward": "跳回学习页", "icon": "🌱" }
+    ]
+  }
+}

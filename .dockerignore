@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/uvicorn*.log
+backend/verify*.txt
+backend/FINAL.txt
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# 数据/日志（部署时通过 COPY data/ 显式拷）
+backend/data/
+
+# 杂项
+.pytest_cache/
+docs/
+renwutupian/
+.git/
+.gitignore
+.DS_Store
+*.md

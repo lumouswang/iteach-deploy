@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "case_id": "salt_lake_fossil",
+  "subjects": [
+    {"name": "化学", "icon": "⚗️", "color": "#67C23A", "exam_points": [
+      {"name": "溶解度与温度关系", "weight": "必考", "trigger": "白毛随温度消长"},
+      {"name": "多盐共饱和体系", "weight": "必考", "trigger": "盐湖多盐分共存"},
+      {"name": "结晶水合物", "weight": "必考", "trigger": "芒硝 Na₂SO₄·10H₂O"},
+      {"name": "沉淀溶解平衡", "weight": "选考高频", "trigger": "入水冒泡体积缩小"},
+      {"name": "亨利定律", "weight": "选考高频", "trigger": "气体溶解度随温度变化"},
+      {"name": "Ksp选择性沉淀", "weight": "选考高频", "trigger": "多种盐分选择性溶解"}
+    ]},
+    {"name": "物理", "icon": "⚙️", "color": "#409EFF", "exam_points": [
+      {"name": "蒸发吸热与汽化潜热", "weight": "必考", "trigger": "蒸发降温"},
+      {"name": "毛细现象", "weight": "必考", "trigger": "盐液上升5-10cm"},
+      {"name": "辐射冷却", "weight": "必考", "trigger": "清晨最低温"}
+    ]},
+    {"name": "生物", "icon": "🌿", "color": "#E6A23C", "exam_points": [
+      {"name": "生物化石判定标准", "weight": "必考", "trigger": "老师断言非化石"},
+      {"name": "嗜盐菌与渗透压调节", "weight": "选考高频", "trigger": "盐湖嗜盐菌耐渗机理"}
+    ]},
+    {"name": "地理", "icon": "🗺️", "color": "#F56C6C", "exam_points": [
+      {"name": "内陆封闭盆地与盐湖", "weight": "选考", "trigger": "运城盆地封闭"},
+      {"name": "蒸发与降水差", "weight": "选考", "trigger": "蒸发2000mm vs 降水500mm"},
+      {"name": "史料实证", "weight": "必考", "trigger": "《水经注》反证"}
+    ]}
+  ],
+  "total_subjects": 4,
+  "total_points": 14,
+  "bloom_coverage": ["识记", "理解", "应用", "分析", "评价", "创造"]
+}
