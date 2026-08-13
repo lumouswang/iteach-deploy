@@ -216,6 +216,15 @@ async function startGame() {
   }
 }
 
+// 进入已创建好的房间（“进入房间”按钮复用 startGame 的跳转逻辑）
+function enterCreatedRoom() {
+  if (!createdRoom.value) return
+  const roomId = createdRoom.value.room_id
+  const playerId = createdRoom.value.player_id || ''
+  sessionStorage.setItem(`room:${roomId}:player_id`, playerId)
+  router.push(`/play/${roomId}`)
+}
+
 onMounted(loadData)
 </script>
 
