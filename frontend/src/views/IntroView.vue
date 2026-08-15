@@ -89,7 +89,16 @@
         <el-button @click="loadData" plain round>
           <span style="margin-right: 6px;">🔄</span>重新加载数据
         </el-button>
-        <span class="version-tag">v 0.3 · beta</span>
+        <el-button @click="goTeacher" type="success" plain round>
+          <span style="margin-right: 6px;">📋</span>教师控制台
+        </el-button>
+        <el-button @click="showResources = true" type="warning" plain round>
+          <span style="margin-right: 6px;">📚</span>教学资源
+        </el-button>
+        <el-button @click="showDiscussion = true" type="info" plain round>
+          <span style="margin-right: 6px;">💬</span>讨论区
+        </el-button>
+        <span class="version-tag">v 0.4 · beta</span>
       </div>
 
       <transition name="created-room">
@@ -137,13 +146,60 @@
         <small>提示：确保后端 FastAPI 已启动（cd backend; uvicorn main:app --reload）</small>
       </div>
     </div>
+
+    <!-- 教学资源对话框 -->
+    <el-dialog v-model="showResources" title="📚 教学资源与考点参考" width="720px" top="6vh">
+      <el-input v-model="resourceSearch" placeholder="搜索资源..." clearable style="margin-bottom: 16px;" />
+      <div class="resource-grid">
+        <div
+          v-for="r in filteredResources"
+          :key="r.url"
+          class="resource-card"
+          @click="openLink(r.url)"
+        >
+          <div class="resource-icon">{{ r.icon }}</div>
+          <div class="resource-body">
+            <el-tag size="small" effect="plain">{{ r.category }}</el-tag>
+            <div class="resource-name">{{ r.name }}</div>
+            <div class="resource-url">{{ r.url.replace('https://', '').slice(0, 40) }}...</div>
+          </div>
+          <el-icon class="resource-arrow"><ArrowRight /></el-icon>
+        </div>
+      </div>
+      <div v-if="filteredResources.length === 0" class="empty-hint">未找到匹配资源</div>
+    </el-dialog>
+
+    <!-- 讨论区对话框 -->
+    <el-dialog v-model="showDiscussion" title="💬 师生讨论区" width="640px" top="6vh">
+      <div class="discussion-list">
+        <div v-for="d in discussions" :key="d.id" class="discussion-item">
+          <el-avatar :size="40" class="disc-avatar">{{ d.avatar }}</el-avatar>
+          <div class="disc-body">
+            <div class="disc-head">
+              <strong>{{ d.author }}</strong>
+              <span class="disc-time">{{ d.timestamp }}</span>
+            </div>
+            <div class="disc-content">{{ d.content }}</div>
+            <div class="disc-foot">
+              <el-button text size="small" type="primary">💬 回复 ({{ d.replies }})</el-button>
+              <el-button text size="small">👍 赞同</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="discussion-input">
+        <el-input v-model="newMessage" type="textarea" :rows="2" placeholder="说点什么..." />
+        <el-button type="primary" @click="postMessage" :disabled="!newMessage.trim()">发表</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const script = ref<any>(null)
@@ -217,6 +273,81 @@ async function startGame() {
 }
 
 // 进入已创建好的房间（“进入房间”按钮复用 startGame 的跳转逻辑）
+function goTeacher() {
+  router.push('/teacher')
+}
+
+// 教学资源对话框
+const showResources = ref(false)
+const resourceSearch = ref('')
+const filteredResources = computed(() => {
+  if (!resourceSearch.value.trim()) return resourceLinks
+  const q = resourceSearch.value.toLowerCase()
+  return resourceLinks.filter(r =>
+    r.name.toLowerCase().includes(q) || r.category.toLowerCase().includes(q)
+  )
+})
+function openLink(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+const resourceLinks = [
+  { category: '高中教材', icon: '📖', name: '人教版高中化学必修一·第三章', url: 'https://www.pep.com.cn' },
+  { category: '高中教材', icon: '📖', name: '鲁科版高中化学选修·溶解平衡专题', url: 'https://www.lkjyedu.com' },
+  { category: '高中教材', icon: '📖', name: '人教版高中地理必修一·水循环', url: 'https://www.pep.com.cn' },
+  { category: '高中教材', icon: '📖', name: '人教版高中生物必修一·细胞渗透压', url: 'https://www.pep.com.cn' },
+  { category: '高考真题', icon: '🎯', name: '2024 高考化学·盐湖题真题', url: 'https://www.koolearn.com' },
+  { category: '高考真题', icon: '🎯', name: '2023 高考地理·盐湖与矿产', url: 'https://www.koolearn.com' },
+  { category: '实验资料', icon: '🔬', name: '运城盐湖官方资料·中国地理学会', url: 'http://www.geog.com.cn' },
+  { category: '实验资料', icon: '🔬', name: '芒硝晶体生长实验视频·BiliBili', url: 'https://www.bilibili.com' },
+  { category: '史料', icon: '📜', name: '《水经注》原文及今译', url: 'https://www.guoxue.com' },
+  { category: '史料', icon: '📜', name: '徐霞客《游记》山西卷', url: 'https://www.guoxue.com' },
+  { category: '拓展阅读', icon: '📰', name: '《盐湖化学》论文综述·CNKI', url: 'https://www.cnki.net' },
+  { category: '拓展阅读', icon: '📰', name: '运城盐湖生态保护·新华网', url: 'https://www.xinhuanet.com' },
+]
+
+// 讨论区对话框（本地模拟，后端可选）
+const showDiscussion = ref(false)
+const discussions = ref([
+  {
+    id: 1,
+    author: '王老师·北京',
+    avatar: '👨‍🏫',
+    timestamp: '2 小时前',
+    content: '这套课件跨学科整合做得很好，建议在 Ksp 部分加点高考真题！',
+    replies: 3,
+  },
+  {
+    id: 2,
+    author: '李同学·高一三班',
+    avatar: '🧑‍🎓',
+    timestamp: '今天 09:30',
+    content: '武将卡机制特别上头！我们班同学都在抢徐霞客那张卡 🗻',
+    replies: 1,
+  },
+  {
+    id: 3,
+    author: '陈同学·高一五班',
+    avatar: '👩‍🎓',
+    timestamp: '昨天 16:45',
+    content: '老师我们卡在微观层了，能不能给个提示？',
+    replies: 5,
+  },
+])
+
+const newMessage = ref('')
+function postMessage() {
+  if (!newMessage.value.trim()) return
+  discussions.value.unshift({
+    id: Date.now(),
+    author: '我',
+    avatar: '🙂',
+    timestamp: '刚刚',
+    content: newMessage.value.trim(),
+    replies: 0,
+  })
+  newMessage.value = ''
+}
+
 function enterCreatedRoom() {
   if (!createdRoom.value) return
   const roomId = createdRoom.value.room_id
@@ -653,5 +784,116 @@ onMounted(loadData)
   .actions { flex-direction: column; }
   .cta-button { width: 100%; }
   .cta-text { align-items: center; }
+}
+
+/* 资源对话框 */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.resource-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #fafbfc;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.resource-card:hover {
+  background: #f0f4f8;
+  border-color: #409eff;
+  transform: translateX(4px);
+}
+.resource-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.resource-body {
+  flex: 1;
+  min-width: 0;
+}
+.resource-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #303133;
+  margin: 4px 0 2px;
+  line-height: 1.4;
+}
+.resource-url {
+  font-size: 11px;
+  color: #909399;
+  font-family: monospace;
+}
+.resource-arrow {
+  color: #c0c4cc;
+}
+.empty-hint {
+  text-align: center;
+  padding: 40px;
+  color: #909399;
+}
+
+/* 讨论区 */
+.discussion-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.discussion-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.disc-avatar {
+  background: linear-gradient(135deg, #409eff, #67c23a);
+  color: white;
+  flex-shrink: 0;
+}
+.disc-body {
+  flex: 1;
+  min-width: 0;
+}
+.disc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.disc-head strong {
+  color: #303133;
+  font-size: 14px;
+}
+.disc-time {
+  font-size: 11px;
+  color: #909399;
+}
+.disc-content {
+  font-size: 13px;
+  color: #606266;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.disc-foot {
+  display: flex;
+  gap: 4px;
+}
+.discussion-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 2px solid #f0f4f8;
+}
+@media (max-width: 768px) {
+  .resource-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -664,6 +664,98 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
             pass
 
 
+# ============ 教师端 Dashboard API (P1) ============
+# 教师端不修改 RoomManager 核心逻辑，只做数据聚合 + 课堂控制
+from teacher import TeacherDashboard  # noqa: E402
+
+_teacher_dashboard = TeacherDashboard(room_manager, SCRIPT, CARDS)
+
+
+class TeacherOverviewResp(BaseModel):
+    """班级总览响应"""
+    teacher_id: Optional[str] = None
+    timestamp: str
+    total_rooms: int
+    active_rooms: int
+    total_students: int
+    rooms_detail: list
+    aggregated: dict
+
+
+@app.get("/api/teacher/overview", response_model=TeacherOverviewResp,
+         summary="教师端：班级进度总览")
+def teacher_overview(teacher_id: Optional[str] = None):
+    """获取所有活跃房间的进度汇总，用于教师 Dashboard 主页"""
+    return _teacher_dashboard.get_class_overview(teacher_id)
+
+
+@app.get("/api/teacher/rooms", summary="教师端：列出所有房间")
+def teacher_rooms(teacher_id: Optional[str] = None):
+    """列出所有活跃房间（带学生、阶段、进度）"""
+    return _teacher_dashboard.get_class_overview(teacher_id).get("rooms_detail", [])
+
+
+@app.get("/api/teacher/kp_catalog", summary="教师端：14 考点掌握率")
+def teacher_kp_catalog():
+    """返回 14 个考点的当前班级掌握率"""
+    return _teacher_dashboard.get_kp_catalog()
+
+
+@app.get("/api/teacher/student/{room_id}/{user_id}", summary="教师端：学情画像")
+def teacher_student_profile(room_id: str, user_id: str):
+    """单个学生在某房间的完整学情画像（能力雷达 + 否决模式 + 时间线）"""
+    profile = _teacher_dashboard.get_student_profile(room_id, user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="学生或房间不存在")
+    return profile
+
+
+@app.get("/api/teacher/heatmap/{room_id}", summary="教师端：答题热力图")
+def teacher_heatmap(room_id: str):
+    """单个房间的答题热力图数据 + 卡住学生建议"""
+    return _teacher_dashboard.get_question_heatmap(room_id)
+
+
+# ---- 课堂控制 ----
+class ControlAction(BaseModel):
+    teacher_id: str
+    message: Optional[str] = None
+    user_id: Optional[str] = None
+
+
+@app.post("/api/teacher/pause/{room_id}", summary="教师端：暂停房间")
+def teacher_pause(room_id: str, body: ControlAction):
+    """暂停指定房间（学生端会收到 paused=true 事件）"""
+    return _teacher_dashboard.pause_room(room_id, body.teacher_id)
+
+
+@app.post("/api/teacher/resume/{room_id}", summary="教师端：恢复房间")
+def teacher_resume(room_id: str, body: ControlAction):
+    return _teacher_dashboard.resume_room(room_id, body.teacher_id)
+
+
+@app.post("/api/teacher/broadcast/{room_id}", summary="教师端：广播消息")
+def teacher_broadcast(room_id: str, body: ControlAction):
+    """向房间内所有学生广播一条教师消息（学生端会弹 toast）"""
+    if not body.message:
+        raise HTTPException(status_code=400, detail="message 不能为空")
+    return _teacher_dashboard.broadcast_message(room_id, body.teacher_id, body.message)
+
+
+@app.post("/api/teacher/kick/{room_id}", summary="教师端：踢出学生")
+def teacher_kick(room_id: str, body: ControlAction):
+    """踢出指定学生（用于课堂纪律管理）"""
+    if not body.user_id:
+        raise HTTPException(status_code=400, detail="user_id 不能为空")
+    return _teacher_dashboard.kick_student(room_id, body.teacher_id, body.user_id)
+
+
+@app.get("/api/teacher/control/{room_id}", summary="学生端：拉取课堂控制状态")
+def teacher_control_state(room_id: str):
+    """学生端轮询此接口，检测是否被暂停 / 收到广播 / 被踢出"""
+    return _teacher_dashboard.get_control_state(room_id)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

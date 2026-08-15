@@ -33,3 +33,22 @@ Thumbs.db
 # 临时编辑文件
 *.tmp
 *.bak
+
+# Debug scripts / temp files
+*.txt
+scripts/
+analyze*.txt
+api_list.txt
+bad_*.txt
+decode_output.txt
+hex_output.txt
+intro_view.txt
+main_*.txt
+npm_build*.txt
+play_script.txt
+real_content.txt
+runtime.txt
+tsc_out*.txt
+vars.txt
+vue_check.txt
+test_*.txt

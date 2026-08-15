@@ -444,6 +444,7 @@ import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { useFireworks } from '../composables/useFireworks'
+import { useSound } from '../composables/useSound'
 import { useRoomStore } from '../stores/room'
 import { useRoomWS } from '../ws/socket'
 import LayerProgress from '../components/LayerProgress.vue'
@@ -464,12 +465,22 @@ const store = useRoomStore()
 // ============ P1 #7: WebSocket 实时同步 ============
 const ws = useRoomWS(() => roomIdParam.value)
 const wsConnected = ws.connected
+const sound = useSound()
 
 ws.on(msg => {
   // 后端在每个动作后广播 state_update
   if (msg.action === 'state_update' && msg.state) {
     store.applyState(msg.state)
   }
+  // 音效反馈
+  if (msg.action === 'clue_added') sound.play('card')
+  else if (msg.action === 'layer_unlocked') sound.play('layer')
+  else if (msg.action === 'combo_success') sound.play('combo')
+  else if (msg.action === 'combo_fail') sound.play('fail')
+  else if (msg.action === 'negation') sound.play('fail')
+  else if (msg.action === 'question_answered') sound.play('question')
+  else if (msg.action === 'phase_change' && msg.phase === 'reveal') sound.play('reveal')
+  else if (msg.action === 'teacher_broadcast') sound.play('broadcast')
 })
 
 onMounted(() => {
