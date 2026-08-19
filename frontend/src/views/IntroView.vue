@@ -89,9 +89,6 @@
         <el-button @click="loadData" plain round>
           <span style="margin-right: 6px;">🔄</span>重新加载数据
         </el-button>
-        <el-button @click="goTeacher" type="success" plain round>
-          <span style="margin-right: 6px;">📋</span>教师控制台
-        </el-button>
         <el-button @click="showResources = true" type="warning" plain round>
           <span style="margin-right: 6px;">📚</span>教学资源
         </el-button>
@@ -100,26 +97,6 @@
         </el-button>
         <span class="version-tag">v 0.4 · beta</span>
       </div>
-
-      <transition name="created-room">
-        <div v-if="createdRoom" class="created-room-box">
-          <el-alert type="success" :closable="false" show-icon>
-            <template #title>
-              <span>房间已创建：<code>{{ createdRoom.room_id }}</code> <el-tag size="small" :type="createdRoom.waiting ? 'warning' : 'success'">
-                {{ createdRoom.waiting ? '等待第二位玩家…' : '已开始' }}
-              </el-tag></span>
-            </template>
-            <template #default>
-              <div>你的玩家 ID：<code>{{ createdRoom.player_id }}</code></div>
-              <div v-if="createdRoom.waiting">把房间号发给第二个玩家，让他在首页选择“加入房间”输入这个号</div>
-              <div v-else>点击下面按钮继续</div>
-            </template>
-          </el-alert>
-          <el-button type="primary" size="large" round @click="enterCreatedRoom" style="margin-top: 14px;">
-            🚀 进入房间 →
-          </el-button>
-        </div>
-      </transition>
 
       <transition name="created-room">
         <div v-if="createdRoom" class="created-room-box">
@@ -273,9 +250,6 @@ async function startGame() {
 }
 
 // 进入已创建好的房间（“进入房间”按钮复用 startGame 的跳转逻辑）
-function goTeacher() {
-  router.push('/teacher')
-}
 
 // 教学资源对话框
 const showResources = ref(false)

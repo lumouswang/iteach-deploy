@@ -716,6 +716,15 @@ def teacher_heatmap(room_id: str):
     return _teacher_dashboard.get_question_heatmap(room_id)
 
 
+@app.get("/api/teacher/leaderboard", summary="教师端：学生排行榜")
+def teacher_leaderboard(sort_by: str = "total_score"):
+    """全班学生综合排行榜。
+
+    sort_by 支持：total_score / clues / combos / negations / layers
+    """
+    return _teacher_dashboard.get_leaderboard(sort_by)
+
+
 # ---- 课堂控制 ----
 class ControlAction(BaseModel):
     teacher_id: str

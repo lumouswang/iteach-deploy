@@ -57,12 +57,70 @@
       </div>
     </section>
 
+    <!-- 学生排行榜 -->
+    <section class="td-leaderboard">
+      <div class="lb-header">
+        <h2>🏆 学生排行榜</h2>
+        <div class="lb-controls">
+          <el-select v-model="leaderboardSortBy" size="small" @change="fetchLeaderboard" style="width: 140px;">
+            <el-option label="综合积分" value="total_score" />
+            <el-option label="线索最多" value="clues" />
+            <el-option label="合技最多" value="combos" />
+            <el-option label="错课最少" value="negations" />
+            <el-option label="解锁最深" value="layers" />
+          </el-select>
+          <el-button @click="fetchLeaderboard" :loading="leaderboardLoading" size="small" plain>
+            <el-icon><Refresh /></el-icon> 刷新
+          </el-button>
+        </div>
+      </div>
+      <div v-if="leaderboard.rankings.length === 0" class="lb-empty">
+        <div class="empty-icon">🎮</div>
+        <div class="empty-text">尚无学生数据</div>
+        <div class="empty-hint">学生创建房间并参与后会自动出现</div>
+      </div>
+      <div v-else class="lb-table-wrap">
+        <table class="lb-table">
+          <thead>
+            <tr>
+              <th width="60">名次</th>
+              <th width="80">奖牌</th>
+              <th>学生</th>
+              <th width="70">房间</th>
+              <th width="70">提问</th>
+              <th width="70">线索</th>
+              <th width="70">合技</th>
+              <th width="70">层数</th>
+              <th width="90">积分</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in leaderboard.rankings"
+              :key="row.user_id"
+              :class="`lb-row rank-${row.rank}`"
+            >
+              <td class="lb-rank">#{{ row.rank }}</td>
+              <td class="lb-badge">{{ row.badge }}</td>
+              <td class="lb-name">{{ row.user_name }}</td>
+              <td class="lb-room"><code>{{ row.room_id.slice(0, 6) }}</code></td>
+              <td>{{ row.questions_asked }}</td>
+              <td class="lb-clue">📌 {{ row.clues }}</td>
+              <td class="lb-combo">⚔️ {{ row.combos }}</td>
+              <td class="lb-layers">🏔️ {{ row.layers_unlocked }}/4</td>
+              <td class="lb-score">{{ row.total_score }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- 主体内容：左 = 房间列表 + 控制，右 = 考点 + 学情 -->
     <main class="td-main">
       <!-- 左栏：房间列表 + 课堂控制 -->
       <section class="td-panel">
         <div class="panel-header">
-          <h2>�️ 房间列表</h2>
+          <h2>🏠 房间列表</h2>
           <el-tag size="small">{{ rooms.length }} 个</el-tag>
         </div>
         <div v-if="rooms.length === 0" class="empty-state">
@@ -340,24 +398,22 @@
             <div class="heatmap">
               <div
                 v-for="s in heatmapData.students"
-                :key="s.user_id || Object.keys(s)[0]"
+                :key="s.user_id"
                 class="heat-row"
               >
-                <span class="heat-name">
-                  {{ currentStudentProfile.user_name }}
-                </span>
+                <span class="heat-name">{{ s.user_name || '匿名' }}</span>
                 <div class="heat-bars">
-                  <div class="heat-bar heat-q" :style="{flex: heatmapData.students[Object.keys(heatmapData.students)[0]]?.questions || 0}">
-                    ❓ {{ heatmapData.students[Object.keys(heatmapData.students)[0]]?.questions || 0 }}
+                  <div class="heat-bar heat-q" :style="{flex: s.questions || 0}">
+                    ❓ {{ s.questions || 0 }}
                   </div>
-                  <div class="heat-bar heat-c" :style="{flex: heatmapData.students[Object.keys(heatmapData.students)[0]]?.clues || 0}">
-                    📌 {{ heatmapData.students[Object.keys(heatmapData.students)[0]]?.clues || 0 }}
+                  <div class="heat-bar heat-c" :style="{flex: s.clues || 0}">
+                    📌 {{ s.clues || 0 }}
                   </div>
-                  <div class="heat-bar heat-n" :style="{flex: heatmapData.students[Object.keys(heatmapData.students)[0]]?.negations || 0}">
-                    ❌ {{ heatmapData.students[Object.keys(heatmapData.students)[0]]?.negations || 0 }}
+                  <div class="heat-bar heat-n" :style="{flex: s.negations || 0}">
+                    ❌ {{ s.negations || 0 }}
                   </div>
-                  <div class="heat-bar heat-b" :style="{flex: heatmapData.students[Object.keys(heatmapData.students)[0]]?.combos || 0}">
-                    ⚔️ {{ heatmapData.students[Object.keys(heatmapData.students)[0]]?.combos || 0 }}
+                  <div class="heat-bar heat-b" :style="{flex: s.combos || 0}">
+                    ⚔️ {{ s.combos || 0 }}
                   </div>
                 </div>
               </div>
@@ -400,6 +456,11 @@ const overview = ref<any>({})
 const rooms = ref<any[]>([])
 const kpCatalog = ref<any[]>([])
 const selectedRoomId = ref('')
+
+// 排行榜状态
+const leaderboard = ref<any>({ rankings: [], total_students: 0, sort_by: 'total_score' })
+const leaderboardSortBy = ref('total_score')
+const leaderboardLoading = ref(false)
 const selectedRoom = ref<any>(null)
 const currentStudentProfile = ref<any>(null)
 const heatmapData = ref<any>({ students: {}, stuck_students: [] })
@@ -430,8 +491,8 @@ async function fetchOverview() {
     rooms.value = r.data.rooms_detail || []
     lastUpdate.value = new Date().toLocaleTimeString()
   } catch (e) {
-    console.error(e)
-    ElMessage.warning('教师端 API 未就绪（后端可能未启动）')
+    console.error('teacher overview fetch failed:', e)
+    // 静默失败：避免频繁弹窗，下一次定时刷新会重试
   }
 }
 
@@ -479,7 +540,7 @@ async function fetchHeatmap(roomId: string) {
 
 async function refreshAll() {
   loading.value = true
-  await Promise.all([fetchOverview(), fetchKpCatalog()])
+  await Promise.all([fetchOverview(), fetchKpCatalog(), fetchLeaderboard()])
   if (selectedRoomId.value) {
     await Promise.all([
       fetchStudentProfile(selectedRoomId.value, selectedRoom.value?.players[0]?.user_id),
@@ -487,6 +548,21 @@ async function refreshAll() {
     ])
   }
   loading.value = false
+}
+
+async function fetchLeaderboard() {
+  leaderboardLoading.value = true
+  try {
+    const r = await axios.get(`${API_BASE}/api/teacher/leaderboard`, {
+      params: { sort_by: leaderboardSortBy.value }
+    })
+    leaderboard.value = r.data
+  } catch (e) {
+    console.error(e)
+    leaderboard.value = { rankings: [], total_students: 0, sort_by: leaderboardSortBy.value }
+  } finally {
+    leaderboardLoading.value = false
+  }
 }
 
 // ---- 课堂控制 ----
@@ -727,6 +803,131 @@ onUnmounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 2px;
+}
+
+/* 排行榜 */
+.td-leaderboard {
+  background: white;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+.lb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f0f4f8;
+}
+.lb-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: #303133;
+}
+.lb-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.lb-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: #909399;
+}
+.lb-empty .empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+.lb-empty .empty-text {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #606266;
+}
+.lb-empty .empty-hint {
+  font-size: 12px;
+  margin-top: 4px;
+  color: #c0c4cc;
+}
+.lb-table-wrap {
+  overflow-x: auto;
+}
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lb-table thead {
+  background: #f5f7fa;
+}
+.lb-table th {
+  padding: 10px 8px;
+  text-align: center;
+  color: #606266;
+  font-weight: 600;
+  border-bottom: 2px solid #e4e7ed;
+  white-space: nowrap;
+}
+.lb-table td {
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  color: #303133;
+}
+.lb-row {
+  transition: background 0.2s;
+}
+.lb-row:hover {
+  background: #f5f7fa;
+}
+.lb-row.rank-1 {
+  background: linear-gradient(90deg, #fff8e1 0%, #ffffff 100%);
+  font-weight: 600;
+}
+.lb-row.rank-2 {
+  background: linear-gradient(90deg, #f5f7fa 0%, #ffffff 100%);
+}
+.lb-row.rank-3 {
+  background: linear-gradient(90deg, #fef0f0 0%, #ffffff 100%);
+}
+.lb-rank {
+  font-weight: 700;
+  color: #d4a574;
+  font-size: 14px;
+}
+.lb-row.rank-1 .lb-rank {
+  color: #c79100;
+}
+.lb-badge {
+  font-size: 20px;
+}
+.lb-name {
+  text-align: left !important;
+  font-weight: 500;
+  color: #303133;
+  padding-left: 12px !important;
+}
+.lb-room code {
+  font-size: 11px;
+  font-family: monospace;
+  background: #fafbfc;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #909399;
+}
+.lb-clue, .lb-combo, .lb-layers {
+  font-size: 12px;
+}
+.lb-score {
+  font-size: 16px;
+  font-weight: 700;
+  color: #409eff;
+}
+.lb-row.rank-1 .lb-score {
+  color: #c79100;
+  font-size: 18px;
 }
 
 /* Main grid */

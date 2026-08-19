@@ -338,22 +338,33 @@ class TeacherDashboard:
             uid = getattr(cmb, "player_id", "unknown")
             heatmap[uid]["combos"] += 1
 
+        # 转成前端友好的数组格式（含 user_name）
+        students_list = []
+        for uid, stats in heatmap.items():
+            player = next((p for p in room.players if p["user_id"] == uid), None)
+            students_list.append({
+                "user_id": uid,
+                "user_name": player.get("user_name", "匿名") if player else "匿名",
+                "questions": stats["questions"],
+                "negations": stats["negations"],
+                "combos": stats["combos"],
+                "clues": stats["clues"],
+            })
+
         # 找出"卡住的学生"（高否决 + 低合技）
         stuck_students = []
-        for uid, stats in heatmap.items():
-            if stats["negations"] >= 3 and stats["combos"] == 0:
-                player = next((p for p in room.players if p["user_id"] == uid), None)
-                if player:
-                    stuck_students.append({
-                        "user_id": uid,
-                        "user_name": player.get("user_name", ""),
-                        "negations": stats["negations"],
-                        "suggestion": "提问过多但未合技，建议教师引导组合"
-                    })
+        for entry in students_list:
+            if entry["negations"] >= 3 and entry["combos"] == 0:
+                stuck_students.append({
+                    "user_id": entry["user_id"],
+                    "user_name": entry["user_name"],
+                    "negations": entry["negations"],
+                    "suggestion": "提问过多但未合技，建议教师引导组合"
+                })
 
         return {
             "room_id": room_id,
-            "students": dict(heatmap),
+            "students": students_list,
             "stuck_students": stuck_students,
             "total_negations": len(room.negation_board),
             "total_combos": len(room.combo_history),
@@ -455,3 +466,108 @@ class TeacherDashboard:
                 "status": "已掌握" if mastery >= 70 else "待加强" if mastery >= 40 else "未达标",
             })
         return catalog
+
+    # ============================================================
+    # 学生排行榜
+    # ============================================================
+    def get_leaderboard(self, sort_by: str = "total_score") -> Dict:
+        """返回所有学生的综合排行榜。
+
+        评分公式：
+          total_score = clues*10 + combos*25 - negations*5 + layers*30
+          其中 layers 数量额外加分（代表解锁深度）
+
+        Args:
+            sort_by: 排序键 (total_score / clues / combos / negations / layers)
+
+        Returns:
+            {
+                "rankings": [
+                    {
+                        "rank": 1,
+                        "user_id": "...",
+                        "user_name": "...",
+                        "room_id": "...",
+                        "clues": 3,
+                        "combos": 1,
+                        "negations": 2,
+                        "layers_unlocked": 2,
+                        "questions_asked": 5,
+                        "total_score": 95,
+                        "badge": "🥇",  # 金/银/铜奖牌
+                    },
+                    ...
+                ],
+                "total_students": 6,
+                "sort_by": "total_score"
+            }
+        """
+        leaderboard: List[Dict] = []
+
+        # 遍历所有房间收集学生
+        for room_id in self._rooms.list_rooms():
+            room = self._rooms.get_room(room_id)
+            if not room:
+                continue
+            for player in room.players:
+                user_id = player.get("user_id")
+                user_name = player.get("user_name", "匿名")
+
+                # 聚合该学生在该房间的数据
+                my_clues = [c for c in room.clues_log if getattr(c, "player_id", None) == user_id]
+                my_questions = [q for q in room.questions_log if getattr(q, "player_id", None) == user_id]
+                my_negations = [q for q in room.negation_board if getattr(q, "player_id", None) == user_id]
+                my_combos = [c for c in room.combo_history if getattr(c, "player_id", None) == user_id]
+
+                clues = len(my_clues)
+                questions = len(my_questions)
+                negations = len(my_negations)
+                combos = len([c for c in my_combos if getattr(c, "success", True)])
+                layers = len(room.unlocked_layers)
+
+                # 评分公式
+                score = clues * 10 + combos * 25 - negations * 5 + layers * 30
+
+                leaderboard.append({
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "room_id": room.room_id,
+                    "room_phase": room.phase.value if hasattr(room.phase, "value") else str(room.phase),
+                    "clues": clues,
+                    "questions_asked": questions,
+                    "negations": negations,
+                    "combos": combos,
+                    "layers_unlocked": layers,
+                    "total_score": score,
+                })
+
+        # 排序
+        if sort_by == "clues":
+            leaderboard.sort(key=lambda x: (-x["clues"], x["negations"]))
+        elif sort_by == "combos":
+            leaderboard.sort(key=lambda x: (-x["combos"], x["negations"]))
+        elif sort_by == "negations":
+            leaderboard.sort(key=lambda x: x["negations"])  # 越少越好
+        elif sort_by == "layers":
+            leaderboard.sort(key=lambda x: (-x["layers_unlocked"], -x["combos"]))
+        else:
+            sort_by = "total_score"
+            leaderboard.sort(key=lambda x: -x["total_score"])
+
+        # 加排名 + 奖牌
+        for idx, entry in enumerate(leaderboard):
+            entry["rank"] = idx + 1
+            if idx == 0:
+                entry["badge"] = "🥇"
+            elif idx == 1:
+                entry["badge"] = "🥈"
+            elif idx == 2:
+                entry["badge"] = "🥉"
+            else:
+                entry["badge"] = "🎖️"
+
+        return {
+            "rankings": leaderboard,
+            "total_students": len(leaderboard),
+            "sort_by": sort_by,
+        }

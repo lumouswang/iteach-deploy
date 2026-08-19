@@ -1,4 +1,4 @@
-# ============ 汤探局 / ITeach - Railway 部署 Dockerfile ============
+# ============ 汤探局 / ITeach - 通用 Dockerfile（Railway / Render / 任何 Docker 平台） ============
 # 多阶段构建：
 #   1) frontend-builder：Node 装依赖并打包 Vue
 #   2) backend-runtime：Python 拷 dist 到 /app/backend/static，起 uvicorn
@@ -38,16 +38,15 @@ COPY data/ ./data/
 # 把前端构建产物放到 backend/static（与 main.py 里的 _CANDIDATE_STATIC_DIRS 第一项匹配）
 COPY --from=frontend-builder /build/frontend/dist ./backend/static/
 
-# Railway 会注入 PORT 环境变量；给个兜底默认
+# PORT 会被部署平台注入（Railway / Render / Fly.io 都注入 PORT），兑底默认 8000
 ENV PORT=8000 \
     SERVE_STATIC=1 \
     PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# 健康检查（Railway 也会用）
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:${PORT}/api/health || exit 1
-
+# 工作目录
 WORKDIR /app/backend
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+
+# 启动命令：使用平台注入的 PORT 环境变量（默认 8000）
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -1,6 +1,6 @@
 <template>
-  <!-- 全局音效开关 + BGM 控制 -->
-  <div class="global-sound-bar" :class="{ collapsed }">
+  <!-- 全局音效开关 + BGM 控制（在门面页隐藏，避免干扰首屏视觉） -->
+  <div v-if="showSoundBar" class="global-sound-bar" :class="{ collapsed }">
     <el-button-group>
       <el-tooltip content="背景音乐（汤探局氛围循环）" placement="bottom">
         <el-button
@@ -9,7 +9,7 @@
           @click="onToggleBgm"
           circle
         >
-          {{ sound.bgmPlaying.value ? '�' : '🔇' }}
+          {{ sound.bgmPlaying.value ? '🎵' : '🔇' }}
         </el-button>
       </el-tooltip>
       <el-tooltip content="静音切换" placement="bottom">
@@ -19,7 +19,7 @@
           @click="onToggleSound"
           circle
         >
-          {{ sound.enabled.value ? '🔊' : '�' }}
+          {{ sound.enabled.value ? '🔊' : '🔈' }}
         </el-button>
       </el-tooltip>
       <el-tooltip content="折叠" placement="bottom">
@@ -34,14 +34,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useSound } from './composables/useSound'
 
 const sound = useSound()
 const collapsed = ref(false)
+const route = useRoute()
+
+// 在门面页（LandingView）隐藏 BGM 浮窗，保持首屏整洁
+const showSoundBar = computed(() => route.path !== '/')
 
 function onToggleBgm() {
-  // 第一次切换 BGM 时确保 AudioContext 已激活
   sound.test()
   sound.bgm.toggle()
 }
@@ -52,7 +56,6 @@ function onToggleSound() {
 
 onMounted(() => {
   // 不在挂载时自动播放 BGM（需要用户交互）
-  // 用户首次点击任意按钮即可触发音效 + BGM
 })
 </script>
 
