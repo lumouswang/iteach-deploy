@@ -39,20 +39,78 @@ class TeacherDashboard:
         # 课堂控制：教师动作广播（暂停/恢复/踢人）
         self._control_state: Dict[str, Dict[str, Any]] = {}  # room_id -> {paused, broadcast_msg, kicked}
 
-        # 答题统计（内存，重启清空；生产环境应该持久化）
-        self._answer_stats: Dict[str, Dict] = defaultdict(lambda: {
-            "total_questions": 0,
-            "negation_count": 0,
-            "combo_count": 0,
-            "clue_count": 0,
-            "layer_unlock_count": 0,
-            "kp_hits": defaultdict(int),      # 考点命中次数
-            "kp_miss": defaultdict(int),      # 考点失败次数
-            "negation_patterns": [],           # 否决模式 [(layer, category)]
-        })
+        # ⚠️ 注意：_answer_stats 已废弃，现在所有统计都从 Room 状态实时聚合
+        # （旧实现靠 engine.py 主动调用 record_event，但没人接，永久为 0）
+        self._answer_stats: Dict[str, Dict] = {}
 
         # 加载考点定义
         self._kp_definitions = self._load_kp_definitions()
+
+        # 索引：card_id -> subject（用于跨学科力 / 学情画像）
+        self._card_subject: Dict[str, str] = {}
+        for c in self._cards.get("cards", []):
+            cid = c.get("id")
+            subj = c.get("subject", "")
+            if cid:
+                # subject 可能是 "化学 + 物理" 这种组合
+                self._card_subject[cid] = subj
+
+        # 索引：knowledge_point 关键词 -> 考点名称
+        # 用于把 clues_log 的 kp 字符串（"史料实证《水经注》反证"）映射到考点名（"史料实证"）
+        self._kp_keyword_index: Dict[str, str] = {}
+        for kp in self._kp_definitions:
+            # 把考点名作为关键词（短字符串精确匹配）
+            self._kp_keyword_index[kp["name"]] = kp["name"]
+            # 也把 trigger 字段里的关键词映射过来（处理"史料实证《水经注》反证"→"史料实证"）
+            if kp.get("trigger"):
+                self._kp_keyword_index[kp["trigger"]] = kp["name"]
+
+    def _resolve_kp_name(self, raw_kp: str) -> Optional[str]:
+        """把 clues_log 里的 kp 字符串解析为 14 个标准考点名之一。
+
+        匹配策略（按优先级）：
+          1. 精确等于考点名 / trigger
+          2. raw_kp 包含考点名（标准名在 raw 里）
+          3. raw_kp 包含 trigger
+          4. 去噪后关键词匹配（去掉'化学·' '物理·' '生物·' '地理·' 前缀）
+          5. 部分关键词重合（取最长的重合）
+        """
+        if not raw_kp:
+            return None
+        # 1. 精确命中
+        if raw_kp in self._kp_keyword_index:
+            return self._kp_keyword_index[raw_kp]
+        # 2/3. substring 匹配
+        for kw, kp_name in self._kp_keyword_index.items():
+            if kw and kw in raw_kp:
+                return kp_name
+        # 4. 去噪后匹配：去掉 '学科·' 前缀
+        import re
+        cleaned = re.sub(r'^[化学物理生物地理]+\s*[·\.\-]\s*', '', raw_kp).strip()
+        if cleaned != raw_kp:
+            for kw, kp_name in self._kp_keyword_index.items():
+                if kw and kw in cleaned:
+                    return kp_name
+                if cleaned and cleaned in kw:
+                    return kp_name
+        # 5. 最长公共子串匹配（至少 4 个字符）
+        best_match = None
+        best_len = 0
+        for kw, kp_name in self._kp_keyword_index.items():
+            if len(kw) < 4:
+                continue
+            # 检查任意连续 4+ 字符的重合
+            for n in range(min(len(kw), len(cleaned or raw_kp)), 3, -1):
+                for i in range(len(kw) - n + 1):
+                    substr = kw[i:i+n]
+                    if substr in (cleaned or raw_kp):
+                        if n > best_len:
+                            best_len = n
+                            best_match = kp_name
+                        break
+                if best_len >= n:
+                    break
+        return best_match
 
     def _load_kp_definitions(self) -> List[Dict]:
         """从 knowledge_map.json 加载考点定义"""
@@ -104,7 +162,9 @@ class TeacherDashboard:
         total_combo_attempts = 0
 
         for room_info in rooms:
-            room = self._rooms.get_room(room_info["room_id"])
+            # list_rooms 返 List[str]，兼容 list[dict] 两种格式
+            room_id = room_info["room_id"] if isinstance(room_info, dict) else room_info
+            room = self._rooms.get_room(room_id)
             if not room:
                 continue
 
@@ -112,7 +172,8 @@ class TeacherDashboard:
             overview["total_students"] += len(room.players)
 
             layers = len(room.unlocked_layers)
-            questions = room.questions_used_total
+            # 提问总数 = len(questions_log)（最准，从 log 反推）
+            questions = len(room.questions_log)
             clues = len(room.clues_log)
             combos = len(room.combo_history)
 
@@ -123,7 +184,7 @@ class TeacherDashboard:
 
             overview["rooms_detail"].append({
                 "room_id": room.room_id,
-                "case_id": room.case_id,
+                "case_id": getattr(room, "case_id", "salt_lake_fossil"),
                 "phase": room.phase.value if hasattr(room.phase, "value") else str(room.phase),
                 "players": [{"user_id": p["user_id"], "user_name": p["user_name"]} for p in room.players],
                 "is_multiplayer": room.is_multiplayer,
@@ -143,21 +204,42 @@ class TeacherDashboard:
             (total_combos / max(total_combo_attempts, 1)) * 100, 1
         ) if total_combo_attempts else 0.0
 
-        # 考点掌握率
+        # 🔧 修复：从 Room 状态实时聚合 kp_mastery（不再依赖空的 _answer_stats）
+        # hit = 出牌线索命中某考点；miss = 该考点被否决过（提问出现"不是X"）
+        kp_hit: Dict[str, int] = {kp["name"]: 0 for kp in self._kp_definitions}
+        kp_miss: Dict[str, int] = {kp["name"]: 0 for kp in self._kp_definitions}
+        for room_info in rooms:
+            room_id = room_info["room_id"] if isinstance(room_info, dict) else room_info
+            room = self._rooms.get_room(room_id)
+            if not room:
+                continue
+            for c in getattr(room, "clues_log", []):
+                kp_raw = getattr(c, "knowledge_point", "")
+                kp_name = self._resolve_kp_name(kp_raw)
+                if kp_name and kp_name in kp_hit:
+                    kp_hit[kp_name] += 1
+            for n_ in getattr(room, "negation_board", []):
+                kp_raw = getattr(n_, "knowledge_point", "")
+                kp_name = self._resolve_kp_name(kp_raw)
+                if kp_name and kp_name in kp_miss:
+                    kp_miss[kp_name] += 1
+
         for kp in self._kp_definitions:
             kp_name = kp["name"]
-            stats = self._answer_stats.get(kp_name, {"kp_hits": {}, "kp_miss": {}})
-            hits = stats["kp_hits"].get(kp_name, 0)
-            misses = stats["kp_miss"].get(kp_name, 0)
+            hits = kp_hit.get(kp_name, 0)
+            misses = kp_miss.get(kp_name, 0)
             total = hits + misses
-            mastery = round((hits / total) * 100, 1) if total else 0.0
+            # mastery = hits / total，有 total 才算出百分比；都没数据时 0.0
+            mastery = round((hits / total) * 100, 1) if total > 0 else 0.0
             overview["aggregated"]["kp_mastery"][kp_name] = {
                 "hit": hits,
                 "miss": misses,
                 "mastery_pct": mastery,
                 "subject": kp["subject"],
                 "subject_color": kp["subject_color"],
+                "subject_icon": kp.get("subject_icon", "📚"),
                 "weight": kp["weight"],
+                "total_attempts": total,
             }
 
         return overview
@@ -261,18 +343,15 @@ class TeacherDashboard:
         combo_attempts = len(combos) if combos else 0
         combo_score = min(100, combo_attempts * 25)
 
-        # 跨学科力 = 用过的卡覆盖的学科数
+        # 跨学科力 = 用过的卡覆盖的学科数（🔧 用 cards.json 的 subject 字段，不要猜关键词）
         subjects_used = set()
         for c in clues:
-            kp = getattr(c, "knowledge_point", "")
-            if "化学" in kp or "盐湖" in kp or "Ksp" in kp or "溶解" in kp:
-                subjects_used.add("化学")
-            if "毛细" in kp or "蒸发" in kp or "辐射" in kp or "物理" in kp:
-                subjects_used.add("物理")
-            if "化石" in kp or "嗜盐" in kp or "生物" in kp:
-                subjects_used.add("生物")
-            if "盐湖" in kp or "盆地" in kp or "水经" in kp or "地理" in kp:
-                subjects_used.add("地理")
+            card_id = getattr(c, "card_id", "")
+            subj_str = self._card_subject.get(card_id, "")
+            # subject 可能是 "化学 + 物理" 这种组合
+            for s in ("化学", "物理", "生物", "地理"):
+                if s in subj_str:
+                    subjects_used.add(s)
         cross_score = min(100, len(subjects_used) * 25)
 
         # 探究深度 = 解锁层数
@@ -287,21 +366,22 @@ class TeacherDashboard:
         }
 
     def _student_kp_mastery(self, clues) -> Dict[str, Dict]:
-        """学生考点掌握情况"""
-        kp_data = defaultdict(lambda: {"hit": 0, "miss": 0})
+        """学生考点掌握情况（统一用 14 个标准考点名）"""
+        kp_data: Dict[str, Dict[str, int]] = {
+            kp["name"]: {"hit": 0, "miss": 0} for kp in self._kp_definitions
+        }
         for c in clues:
-            kp = getattr(c, "knowledge_point", "")
-            if not kp:
-                continue
-            # 简化：线索算 hit
-            kp_data[kp]["hit"] += 1
+            kp_raw = getattr(c, "knowledge_point", "")
+            kp_name = self._resolve_kp_name(kp_raw)
+            if kp_name and kp_name in kp_data:
+                kp_data[kp_name]["hit"] += 1
         return {
-            kp: {
+            kp_name: {
                 "hit": v["hit"],
                 "miss": v["miss"],
                 "mastery_pct": round((v["hit"] / max(v["hit"] + v["miss"], 1)) * 100, 1)
             }
-            for kp, v in kp_data.items()
+            for kp_name, v in kp_data.items() if v["hit"] > 0 or v["miss"] > 0
         }
 
     # ============================================================
@@ -448,13 +528,29 @@ class TeacherDashboard:
     # ============================================================
 
     def get_kp_catalog(self) -> List[Dict]:
-        """返回所有考点 + 当前班级平均掌握率"""
+        """返回所有考点 + 当前班级平均掌握率（实时从 Room 聚合）"""
+        # 实时从所有 Room 聚合 hit/miss
+        kp_hit: Dict[str, int] = {kp["name"]: 0 for kp in self._kp_definitions}
+        kp_miss: Dict[str, int] = {kp["name"]: 0 for kp in self._kp_definitions}
+        for room_info in self._rooms.list_rooms():
+            room_id = room_info["room_id"] if isinstance(room_info, dict) else room_info
+            room = self._rooms.get_room(room_id)
+            if not room:
+                continue
+            for c in getattr(room, "clues_log", []):
+                kp_name = self._resolve_kp_name(getattr(c, "knowledge_point", ""))
+                if kp_name and kp_name in kp_hit:
+                    kp_hit[kp_name] += 1
+            for n_ in getattr(room, "negation_board", []):
+                kp_name = self._resolve_kp_name(getattr(n_, "knowledge_point", ""))
+                if kp_name and kp_name in kp_miss:
+                    kp_miss[kp_name] += 1
+
         catalog = []
         for kp in self._kp_definitions:
             kp_name = kp["name"]
-            stats = self._answer_stats.get(kp_name, {"kp_hits": {}, "kp_miss": {}})
-            hits = sum(stats["kp_hits"].values())
-            misses = sum(stats["kp_miss"].values())
+            hits = kp_hit.get(kp_name, 0)
+            misses = kp_miss.get(kp_name, 0)
             total = hits + misses
             mastery = round((hits / total) * 100, 1) if total else 0.0
 
@@ -463,6 +559,7 @@ class TeacherDashboard:
                 "class_mastery_pct": mastery,
                 "class_hits": hits,
                 "class_misses": misses,
+                "total_attempts": total,
                 "status": "已掌握" if mastery >= 70 else "待加强" if mastery >= 40 else "未达标",
             })
         return catalog
