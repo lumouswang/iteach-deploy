@@ -64,36 +64,52 @@ class TeacherDashboard:
             # 也把 trigger 字段里的关键词映射过来（处理"史料实证《水经注》反证"→"史料实证"）
             if kp.get("trigger"):
                 self._kp_keyword_index[kp["trigger"]] = kp["name"]
+            # 也把 card_keywords 列表里的关键词映射过来（处理卡牌 clues 里写的"蒸发与潜热"→"蒸发吸热与汽化潜热"）
+            for ck in (kp.get("card_keywords") or []):
+                self._kp_keyword_index[ck] = kp["name"]
 
     def _resolve_kp_name(self, raw_kp: str) -> Optional[str]:
         """把 clues_log 里的 kp 字符串解析为 14 个标准考点名之一。
 
         匹配策略（按优先级）：
           1. 精确等于考点名 / trigger
-          2. raw_kp 包含考点名（标准名在 raw 里）
+          2. raw_kp 包含考点名（标准名在 raw 里，正向 substring）
           3. raw_kp 包含 trigger
           4. 去噪后关键词匹配（去掉'化学·' '物理·' '生物·' '地理·' 前缀）
-          5. 部分关键词重合（取最长的重合）
+          5. **反向 substring**：考点标准名（短）反过来包含 raw_kp（长）
+             例：表里 "内陆封闭盆地与盐湖" ⊃ 卡牌 "封闭盆地与盐湖形成"
+          6. 去噪后反向 substring
+          7. 最长公共子串匹配（至少 4 个字符，兜底）
         """
         if not raw_kp:
             return None
         # 1. 精确命中
         if raw_kp in self._kp_keyword_index:
             return self._kp_keyword_index[raw_kp]
-        # 2/3. substring 匹配
+        # 2/3. 正向 substring：标准名在 raw 里
         for kw, kp_name in self._kp_keyword_index.items():
             if kw and kw in raw_kp:
                 return kp_name
-        # 4. 去噪后匹配：去掉 '学科·' 前缀
+        # 4. 去噪：去掉 '学科·' 前缀（"化学·溶解度" → "溶解度"）
         import re
         cleaned = re.sub(r'^[化学物理生物地理]+\s*[·\.\-]\s*', '', raw_kp).strip()
+        # 5. 反向 substring：短标准名 ⊃ 长 raw_kp（卡牌里写"封闭盆地与盐湖形成"，表里"内陆封闭盆地与盐湖"）
+        #    注意：要求标准名长度 >= 4，避免"溶解度"这种过短的误中
+        for kw, kp_name in self._kp_keyword_index.items():
+            if len(kw) >= 4 and raw_kp and raw_kp in kw:
+                return kp_name
+        # 6. 去噪后双向 substring（cleaned 既可能在 kw 里，kw 也可能在 cleaned 里）
         if cleaned != raw_kp:
             for kw, kp_name in self._kp_keyword_index.items():
                 if kw and kw in cleaned:
                     return kp_name
                 if cleaned and cleaned in kw:
                     return kp_name
-        # 5. 最长公共子串匹配（至少 4 个字符）
+            # 6b. 反向 substring 的去噪版：cleaned 在 kw 里
+            for kw, kp_name in self._kp_keyword_index.items():
+                if len(kw) >= 4 and cleaned and cleaned in kw:
+                    return kp_name
+        # 7. 最长公共子串匹配（至少 4 个字符，兜底）
         best_match = None
         best_len = 0
         for kw, kp_name in self._kp_keyword_index.items():
@@ -126,6 +142,7 @@ class TeacherDashboard:
                         "name": ep["name"],
                         "weight": ep["weight"],
                         "trigger": ep.get("trigger", ""),
+                        "card_keywords": ep.get("card_keywords", []),
                     })
             return kps
         except Exception as e:

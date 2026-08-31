@@ -11,7 +11,7 @@
       {"name": "Ksp选择性沉淀", "weight": "选考高频", "trigger": "多种盐分选择性溶解"}
     ]},
     {"name": "物理", "icon": "⚙️", "color": "#409EFF", "exam_points": [
-      {"name": "蒸发吸热与汽化潜热", "weight": "必考", "trigger": "蒸发降温"},
+      {"name": "蒸发吸热与汽化潜热", "weight": "必考", "trigger": "蒸发降温", "card_keywords": ["蒸发与潜热", "蒸发吸热使卤水温度下降"]},
       {"name": "毛细现象", "weight": "必考", "trigger": "盐液上升5-10cm"},
       {"name": "辐射冷却", "weight": "必考", "trigger": "清晨最低温"}
     ]},
