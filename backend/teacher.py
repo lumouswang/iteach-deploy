@@ -693,3 +693,6 @@ class TeacherDashboard:
             "total_students": len(leaderboard),
             "sort_by": sort_by,
         }
+
+# build-marker: 2026-09-02 21:58:45
+

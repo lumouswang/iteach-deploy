@@ -29,10 +29,11 @@ RUN apt-get update \
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# 后端代码
+# 后端代码（先拷 .pyc / __pycache__ 屏蔽，让数据文件单独分层）
 COPY backend/ ./backend/
 
 # 数据文件（4 个 JSON 都在仓库 data/ 下，相对 backend/main.py 的 ../data）
+# ↓↓↓ 这一行在每次 data/ 内容变化时会重 build 整个 data 层 ↓↓↓
 COPY data/ ./data/
 
 # 把前端构建产物放到 backend/static（与 main.py 里的 _CANDIDATE_STATIC_DIRS 第一项匹配）
