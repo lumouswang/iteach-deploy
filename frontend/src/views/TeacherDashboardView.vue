@@ -1,6 +1,9 @@
 <template>
   <!-- 教师端 Dashboard (P1) -->
   <div class="teacher-dashboard">
+    <div style="background:lime;padding:10px;color:black;font-weight:bold;">
+      🔧 DEBUG: TeacherDashboardView 渲染中... (v2026-09-02-debug)
+    </div>
     <header class="td-header">
       <div class="td-brand">
         <span class="td-logo">📋</span>
