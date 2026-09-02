@@ -51,3 +51,5 @@ WORKDIR /app/backend
 
 # 启动命令：使用平台注入的 PORT 环境变量（默认 8000）
 CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# touch 2026-09-02 23:07:44
+
