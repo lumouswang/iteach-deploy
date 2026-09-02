@@ -61,7 +61,7 @@
           "id": "clue_history_modern_salt_mining",
           "label": "史料多记盐池晒盐工艺",
           "content": "《水经注》《新唐书·食货志》均载运城盐湖'集工采盐'、'垦畦晒盐'，反映其为盐田而非化石产地。",
-          "knowledge_point": "史料与产业地理"
+          "knowledge_point": "史料实证视角下的产业地理记载"
         }
       ],
       "thinking_view": "史料-考辨视角",
@@ -87,13 +87,13 @@
           "id": "clue_chem_solubility_order",
           "label": "盐类按溶解度顺序析出",
           "content": "石膏（CaSO₄·2H₂O）溶解度先达饱和先析出，之后是岩盐（NaCl），最后是钾镁盐。这一序列称为'盐类析出序列'。",
-          "knowledge_point": "盐湖的盐类析出序列"
+          "knowledge_point": "多盐共饱和体系中的盐类析出序列"
         },
         {
           "id": "clue_math_log_precip",
           "label": "盐类浓度累积近似对数增长",
           "content": "随蒸发率增大，盐湖卤水盐度呈近似对数函数增长；可用 log 模型粗估析盐阶段。",
-          "knowledge_point": "对数模型与盐湖演化"
+          "knowledge_point": "溶解度与温度关系驱动的对数增长模型"
         }
       ],
       "thinking_view": "数学-推演视角",
@@ -160,6 +160,12 @@
           "label": "毛细作用驱动盐水上涌",
           "content": "盐湖浅滩毛细孔径 μm 级，毛细力将地下卤水抽吸至地表，蒸发后形成盐霜、盐花。",
           "knowledge_point": "毛细现象与盐湖地貌"
+        },
+        {
+          "id": "clue_phys_radiation_cooling",
+          "label": "清晨近地辐射冷却",
+          "content": "盐滩夜间长波辐射散热，清晨日出前近地层温度最低，使盐类析晶出现白毛；日出后辐射加热回升，白毛消退。",
+          "knowledge_point": "辐射冷却"
         }
       ],
       "thinking_view": "物理-穷理视角",
@@ -185,13 +191,13 @@
           "id": "clue_math_crystal_model",
           "label": "析晶速率函数拟合",
           "content": "盐湖日析盐量 M(t) ≈ k·(E-P)·A·t，其中 E 为蒸发量、P 为降水量、A 为盐田面积。",
-          "knowledge_point": "盐田产能数学建模"
+          "knowledge_point": "结晶水合物析出与盐田产能数学建模"
         },
         {
           "id": "clue_phys_sat_vapor",
           "label": "饱和蒸气压随温度升高",
           "content": "Clausius-Clapeyron 关系：饱和蒸气压随温度指数上升，故高温蒸发远强于低温。",
-          "knowledge_point": "饱和蒸气压与温度"
+          "knowledge_point": "亨利定律视角下的饱和蒸气压与温度"
         }
       ],
       "thinking_view": "数学-建模视角",
@@ -217,13 +223,13 @@
           "id": "clue_synth_unified_explanation",
           "label": "跨学科验证框架",
           "content": "地理(盆地+蒸发)、化学(溶解度+结晶)、生物(化石标准+嗜盐菌)、物理(蒸发吸热+毛细)、数学(序列+对数拟合) 五个学科互相印证，才能锁定汤底。",
-          "knowledge_point": "跨学科综合分析"
+          "knowledge_point": "沉淀溶解平衡的跨学科综合分析"
         },
         {
           "id": "clue_synth_pedagogy",
           "label": "科学论证规范",
           "content": "从观察到机制、从现象到本质，每一步都需有证据支撑，不可凭直觉跳步推理。本题所有线索共同指向同一解释。",
-          "knowledge_point": "科学方法论"
+          "knowledge_point": "Ksp选择性沉淀教学中的科学方法论"
         }
       ],
       "thinking_view": "综合-会通视角",
