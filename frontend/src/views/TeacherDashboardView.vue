@@ -486,10 +486,7 @@ const API_BASE = (typeof window !== 'undefined' && (window as any).__TEACHER_API
 
 async function fetchOverview() {
   try {
-    const r = await axios.get(`${API_BASE}/api/teacher/overview`, {
-      params: { teacher_id: teacherId.value, _t: Date.now() },
-      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-    })
+    const r = await axios.get(`${API_BASE}/api/teacher/overview`, { params: { teacher_id: teacherId.value } })
     overview.value = r.data
     rooms.value = r.data.rooms_detail || []
     lastUpdate.value = new Date().toLocaleTimeString()
@@ -501,10 +498,7 @@ async function fetchOverview() {
 
 async function fetchKpCatalog() {
   try {
-    const r = await axios.get(`${API_BASE}/api/teacher/kp_catalog`, {
-      params: { _t: Date.now() },
-      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-    })
+    const r = await axios.get(`${API_BASE}/api/teacher/kp_catalog`)
     kpCatalog.value = r.data
   } catch (e) {
     console.error(e)
@@ -527,10 +521,7 @@ async function fetchStudentProfile(roomId: string, userId: string) {
     return
   }
   try {
-    const r = await axios.get(`${API_BASE}/api/teacher/student/${roomId}/${userId}`, {
-      params: { _t: Date.now() },
-      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-    })
+    const r = await axios.get(`${API_BASE}/api/teacher/student/${roomId}/${userId}`)
     currentStudentProfile.value = r.data
   } catch (e) {
     console.error(e)
@@ -540,10 +531,7 @@ async function fetchStudentProfile(roomId: string, userId: string) {
 
 async function fetchHeatmap(roomId: string) {
   try {
-    const r = await axios.get(`${API_BASE}/api/teacher/heatmap/${roomId}`, {
-      params: { _t: Date.now() },
-      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-    })
+    const r = await axios.get(`${API_BASE}/api/teacher/heatmap/${roomId}`)
     heatmapData.value = r.data
   } catch (e) {
     console.error(e)
@@ -566,8 +554,7 @@ async function fetchLeaderboard() {
   leaderboardLoading.value = true
   try {
     const r = await axios.get(`${API_BASE}/api/teacher/leaderboard`, {
-      params: { sort_by: leaderboardSortBy.value, _t: Date.now() },
-      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      params: { sort_by: leaderboardSortBy.value }
     })
     leaderboard.value = r.data
   } catch (e) {
