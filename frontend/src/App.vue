@@ -1,6 +1,6 @@
 <template>
   <!-- 全局音效开关 + BGM 控制（在门面页隐藏，避免干扰首屏视觉） -->
-  <div v-if="showSoundBar" class="global-sound-bar" :class="{ collapsed }">
+  <div v-if="false" class="global-sound-bar" :class="{ collapsed }">
     <el-button-group>
       <el-tooltip content="背景音乐（汤探局氛围循环）" placement="bottom">
         <el-button
@@ -31,6 +31,10 @@
   </div>
 
   <router-view />
+  <!-- DEBUG banner -->
+  <div style="position:fixed;bottom:0;left:0;background:cyan;color:black;padding:4px 8px;z-index:99999;font-size:12px;">
+    🔧 v2026-09-02-debug2 App.vue 渲染中
+  </div>
 </template>
 
 <script setup lang="ts">
