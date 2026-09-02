@@ -140,7 +140,7 @@
       "skill_name": "穷理·物性推演",
       "skill_text": "调用物理视角，推演蒸发、毛细、辐射的能量传递。",
       "subject": "物理",
-      "max_use": 2,
+      "max_use": 3,
       "combo_partner": "G6_songyingxing",
       "combo_unlock_layer": 2,
       "exam_tags": [
@@ -156,16 +156,16 @@
           "knowledge_point": "蒸发与潜热"
         },
         {
-          "id": "clue_phys_capillary",
-          "label": "毛细作用驱动盐水上涌",
-          "content": "盐湖浅滩毛细孔径 μm 级，毛细力将地下卤水抽吸至地表，蒸发后形成盐霜、盐花。",
-          "knowledge_point": "毛细现象与盐湖地貌"
-        },
-        {
           "id": "clue_phys_radiation_cooling",
           "label": "清晨近地辐射冷却",
           "content": "盐滩夜间长波辐射散热，清晨日出前近地层温度最低，使盐类析晶出现白毛；日出后辐射加热回升，白毛消退。",
           "knowledge_point": "辐射冷却"
+        },
+        {
+          "id": "clue_phys_capillary",
+          "label": "毛细作用驱动盐水上涌",
+          "content": "盐湖浅滩毛细孔径 μm 级，毛细力将地下卤水抽吸至地表，蒸发后形成盐霜、盐花。",
+          "knowledge_point": "毛细现象与盐湖地貌"
         }
       ],
       "thinking_view": "物理-穷理视角",

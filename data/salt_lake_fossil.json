@@ -31,6 +31,7 @@
     "phenomenon": {
       "id": 1,
       "name": "现象层",
+      "kp_list": ["内陆封闭盆地与盐湖", "蒸发与降水差", "生物化石判定标准", "史料实证"],
       "icon": "🌱",
       "color": "#67C23A",
       "unlock_combo": "地理合技",
@@ -45,6 +46,7 @@
     "condition": {
       "id": 2,
       "name": "条件层",
+      "kp_list": ["多盐共饱和体系", "溶解度与温度关系", "毛细现象", "辐射冷却", "蒸发吸热与汽化潜热"],
       "icon": "🌡️",
       "color": "#409EFF",
       "unlock_combo": "理数合技",
@@ -59,6 +61,7 @@
     "microscopic": {
       "id": 3,
       "name": "微观层",
+      "kp_list": ["结晶水合物", "沉淀溶解平衡", "亨利定律", "嗜盐菌与渗透压调节"],
       "icon": "🔬",
       "color": "#E6A23C",
       "unlock_combo": "转化合技",
@@ -73,6 +76,7 @@
     "ultimate": {
       "id": 4,
       "name": "终极层",
+      "kp_list": ["Ksp选择性沉淀"],
       "icon": "🏔️",
       "color": "#F56C6C",
       "unlock_combo": "链结合技",

@@ -235,6 +235,14 @@ class TeacherDashboard:
                 kp_name = self._resolve_kp_name(kp_raw)
                 if kp_name and kp_name in kp_hit:
                     kp_hit[kp_name] += 1
+            # 此外：每个解锁的 layer 把该 layer 的 kp_list 全部计入 hit（合技解层后考察所有该层考点）
+            layers_cfg = self._script.get("layers", {}) if isinstance(self._script, dict) else {}
+            for layer_key in getattr(room, "unlocked_layers", []) or []:
+                layer_cfg = layers_cfg.get(layer_key, {}) if isinstance(layers_cfg, dict) else {}
+                kp_list = layer_cfg.get("kp_list") or []
+                for kp_name in kp_list:
+                    if kp_name in kp_hit:
+                        kp_hit[kp_name] += 1
             for n_ in getattr(room, "negation_board", []):
                 kp_raw = getattr(n_, "knowledge_point", "")
                 kp_name = self._resolve_kp_name(kp_raw)
