@@ -557,10 +557,27 @@ def room_extend(req: RoomReq):
     return {"ok": True, **game_engine.to_extend(room)}
 
 
-# ============ Dev-only ============
+# ============ Dev-only（公开部署时由 ENABLE_DEV_ENDPOINTS 控制）============
+# 默认：本地开发开启，检测到部署环境变量时自动关闭，避免公开链接被任意调用。
+_ENABLE_DEV = os.getenv("ENABLE_DEV_ENDPOINTS", "").strip() == "1" or (
+    os.getenv("ENABLE_DEV_ENDPOINTS", "").strip() == ""
+    and os.getenv("RAILWAY_ENVIRONMENT") is None
+    and os.getenv("RENDER") is None
+    and not os.getenv("PORT", "").strip()
+)
+if not _ENABLE_DEV:
+    logger.info("Dev-only endpoints disabled (set ENABLE_DEV_ENDPOINTS=1 to force-enable)")
+
+
+def _require_dev_enabled():
+    if not _ENABLE_DEV:
+        raise HTTPException(403, "该接口仅在开发环境可用")
+
+
 @app.post("/api/dev/reset_cards")
 async def dev_reset_cards(request: Request):
     """Dev-only: clear card_usage for the room."""
+    _require_dev_enabled()
     body = await request.json()
     room_id = body.get("room_id")
     if not room_id:
@@ -576,12 +593,14 @@ async def dev_reset_cards(request: Request):
 @app.post("/api/dev/reload_data")
 def dev_reload_data():
     """P2 #16：刷新内存中的 JSON（无需重启）。"""
+    _require_dev_enabled()
     return reload_data()
 
 
 @app.post("/api/dev/gc_rooms")
 def dev_gc_rooms():
     """手动触发 GC（默认 60s 自动跑）"""
+    _require_dev_enabled()
     expired = room_manager.gc_expired()
     return {"ok": True, "expired": expired}
 
