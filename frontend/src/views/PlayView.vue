@@ -27,12 +27,6 @@
         <el-tag :type="phaseTagType" effect="dark" size="small" class="phase-chip">{{ phaseLabel }}</el-tag>
       </div>
       <div class="header-right">
-        <transition name="turn-fade">
-          <div v-if="players.length >= 2" class="turn-indicator" :class="{ my: isMyTurn }">
-            <span class="turn-icon">{{ isMyTurn ? '👉' : '⏳' }}</span>
-            <span v-if="currentPlayer">轮到 <strong>{{ currentPlayer.user_name }}</strong> {{ isMyTurn ? '（你）' : '' }}</span>
-          </div>
-        </transition>
         <div class="room-id">房间：<code>{{ roomIdParam }}</code></div>
         <span class="ws-dot" :class="{ on: wsConnected }" :title="wsConnected ? '实时同步已连接' : '实时同步断开'">●</span>
         <el-button size="small" plain @click="goHome">返回首页</el-button>
@@ -381,7 +375,6 @@
           :class="{
             selected: comboDialog.selected.includes(card.id),
             disabled: !cardEligibleForCombo(card.id),
-            'by-opponent': cardOwnedByOpponent(card.id),
             'can-pair': comboDialog.selected.length === 1 && isValidPairWithSelected(card.id) && !comboDialog.selected.includes(card.id)
           }"
           @click="toggleComboSelect(card.id)"
@@ -389,7 +382,6 @@
           <div class="combo-card-icon">{{ card.badge_icon }}</div>
           <div class="combo-card-name">{{ card.name }}</div>
           <small>{{ cardUsage[card.id] || 0 }}/{{ card.max_use }}</small>
-          <el-tag v-if="cardOwnedByOpponent(card.id)" size="small" type="primary" effect="plain">对手的</el-tag>
           <!-- 合技提示标签 -->
           <div v-if="comboDialog.selected.length === 0 && cardComboTargets(card.id).length > 0" class="combo-card-pair-hint">
             <span
@@ -494,10 +486,6 @@ onUnmounted(() => {
 const layers = ref<Record<string, any>>({})
 const scriptInfo = ref<any>(null)
 const playerId = computed(() => store.playerId)
-const players = computed(() => store.players)
-const turnPlayerId = computed(() => store.turnPlayerId)
-const currentPlayer = computed(() => store.currentPlayer)
-const isMyTurn = computed(() => store.isMyTurn)
 const phase = computed(() => store.phase)
 const questionsRemaining = computed(() => store.questionsRemaining)
 const cardUsage = computed(() => store.cardUsage)
@@ -630,26 +618,6 @@ async function refreshState() {
 }
 
 // ============ P1 #11: 合技卡牌可选性 ============
-function cardOwnedByMe(cardId: string): boolean {
-  if (!store.isMultiplayer) return true
-  for (let i = store.cluesLog.length - 1; i >= 0; i--) {
-    if (store.cluesLog[i].card_id === cardId) {
-      return store.cluesLog[i].player_id === store.playerId
-    }
-  }
-  return false
-}
-
-function cardOwnedByOpponent(cardId: string): boolean {
-  if (!store.isMultiplayer) return false
-  for (let i = store.cluesLog.length - 1; i >= 0; i--) {
-    if (store.cluesLog[i].card_id === cardId) {
-      return store.cluesLog[i].player_id !== store.playerId
-    }
-  }
-  return false
-}
-
 function cardEligibleForCombo(cardId: string): boolean {
   // 该卡必须被至少一人用过（出过线索）
   return store.cluesLog.some(c => c.card_id === cardId)
@@ -782,10 +750,6 @@ function cardNameById(id: string): string {
 
 // ============ 玩家动作 ============
 async function onAsk(qid: string) {
-  if (players.value.length >= 2 && !isMyTurn.value) {
-    ElMessage.warning('还没轮到你，请等待对手操作')
-    return
-  }
   if (questionsRemaining.value <= 0) {
     ElMessage.warning('提问次数已用尽，请用武将合技推进推理')
     return
@@ -830,10 +794,6 @@ async function onAsk(qid: string) {
 }
 
 async function onSelectCard(card: any) {
-  if (players.value.length >= 2 && !isMyTurn.value) {
-    ElMessage.warning('还没轮到你')
-    return
-  }
   const used = cardUsage.value[card.id] || 0
   if (used >= card.max_use) {
     ElMessage.warning(`${card.name} 已用尽（${card.max_use} 次）`)
@@ -1465,10 +1425,6 @@ details[open] .hero-info-toggle {
   opacity: 0.35;
   cursor: not-allowed;
 }
-.combo-card.by-opponent {
-  border-color: #409eff;
-  background: #ecf5ff;
-}
 .combo-card-icon { font-size: 28px; margin-bottom: 4px; }
 .combo-card-name { font-size: 13px; font-weight: bold; }
 .footer-actions {
@@ -1543,37 +1499,6 @@ details[open] .hero-info-toggle {
   line-height: 1.8;
   color: #303133;
   margin: 0;
-}
-.turn-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: #f5f7fa;
-  border: 1px solid #c0c4cc;
-  font-size: 12px;
-  color: #606266;
-  transition: all 0.4s;
-}
-.turn-indicator.my {
-  background: linear-gradient(90deg, #67c23a, #409eff);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 2px 8px rgba(103, 194, 58, 0.4);
-  animation: turn-pulse 2s ease-in-out infinite;
-}
-.turn-icon { font-size: 14px; }
-.turn-fade-enter-active, .turn-fade-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-.turn-fade-enter-from, .turn-fade-leave-to {
-  opacity: 0;
-  transform: translateX(-8px);
-}
-@keyframes turn-pulse {
-  0%, 100% { box-shadow: 0 2px 8px rgba(103, 194, 58, 0.4); }
-  50% { box-shadow: 0 2px 14px rgba(103, 194, 58, 0.8); }
 }
 
 /* ===== 武将手牌出场动画（提问阶段隐藏 / 出牌阶段才出现） ===== */

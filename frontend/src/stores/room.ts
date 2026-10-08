@@ -58,6 +58,8 @@ export const useRoomStore = defineStore('room', () => {
   const comboHistory = ref<any[]>([])
   const players = ref<Array<{ user_id: string; user_name: string }>>([])
   const turnPlayerId = ref<string>('')
+  // 双人对战已下线：该标志恒为 false，使所有双人分支失效。
+  // 后端字段与接口保留（教师端多房间汇总仍在用），仅前端不再启用协作玩法。
   const isMultiplayer = ref(false)
 
   // 静态数据
@@ -91,7 +93,7 @@ export const useRoomStore = defineStore('room', () => {
     comboHistory.value = s.combo_history || []
     players.value = s.players || []
     turnPlayerId.value = s.turn_player_id || ''
-    isMultiplayer.value = s.is_multiplayer || false
+    // 不再从后端读取 is_multiplayer：双人对战已下线，保持 false 以禁用相关 UI 分支
   }
 
   function applyStatic(data: any) {
