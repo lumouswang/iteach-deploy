@@ -24,13 +24,31 @@ logging.basicConfig(
 logger = logging.getLogger("tangtanju")
 
 # ============ 前端静态目录探测（必须在 app 创建前完成）============
-SERVE_STATIC = os.getenv("SERVE_STATIC", "") == "1" or os.getenv("RAILWAY_ENVIRONMENT") is not None
-
+# 规则：显式 SERVE_STATIC=1 开启，或在已知部署平台（Railway/Render/CloudBase）下自动开启，
+# 或本地已构建出 backend/static/index.html 时自动开启。
+# 后者让「Dockerfile 把 dist 拷进 backend/static」这一动作本身就足以生效，
+# 无需依赖各平台注入的环境变量名差异。
 _BACKEND_DIR = Path(__file__).parent
 _CANDIDATE_STATIC_DIRS = [
     _BACKEND_DIR / "static",                        # 部署产物位置（Dockerfile 会拷到这里）
     _BACKEND_DIR.parent / "frontend" / "dist",      # 本地结构
 ]
+
+_EXPLICIT_SERVE_STATIC = os.getenv("SERVE_STATIC", "").strip() == "1"
+_ON_DEPLOY_PLATFORM = any(
+    os.getenv(k)
+    for k in (
+        "RAILWAY_ENVIRONMENT",   # Railway
+        "RENDER",                # Render
+        "TENCENTCLOUD_RUNENV",   # 腾讯云 CloudBase 云托管
+        "TCB_ENV",               # 腾讯云开发 CloudBase
+        "KOYEB_APP_NAME",        # Koyeb
+        "FLY_APP_NAME",          # Fly.io
+    )
+)
+_HAS_BUILT_STATIC = (_BACKEND_DIR / "static" / "index.html").exists()
+
+SERVE_STATIC = _EXPLICIT_SERVE_STATIC or _ON_DEPLOY_PLATFORM or _HAS_BUILT_STATIC
 
 STATIC_DIR: Optional[Path] = None
 if SERVE_STATIC:
@@ -558,13 +576,10 @@ def room_extend(req: RoomReq):
 
 
 # ============ Dev-only（公开部署时由 ENABLE_DEV_ENDPOINTS 控制）============
-# 默认：本地开发开启，检测到部署环境变量时自动关闭，避免公开链接被任意调用。
-_ENABLE_DEV = os.getenv("ENABLE_DEV_ENDPOINTS", "").strip() == "1" or (
-    os.getenv("ENABLE_DEV_ENDPOINTS", "").strip() == ""
-    and os.getenv("RAILWAY_ENVIRONMENT") is None
-    and os.getenv("RENDER") is None
-    and not os.getenv("PORT", "").strip()
-)
+# 默认：本地开发开启，检测到部署环境时自动关闭，避免公开链接被任意调用。
+# 复用上面已算好的 _ON_DEPLOY_PLATFORM，避免各平台变量名判断散落多处。
+_DEV_FLAG = os.getenv("ENABLE_DEV_ENDPOINTS", "").strip()
+_ENABLE_DEV = _DEV_FLAG == "1" or (_DEV_FLAG == "" and not _ON_DEPLOY_PLATFORM and not os.getenv("PORT", "").strip())
 if not _ENABLE_DEV:
     logger.info("Dev-only endpoints disabled (set ENABLE_DEV_ENDPOINTS=1 to force-enable)")
 

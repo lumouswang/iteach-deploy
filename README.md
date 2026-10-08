@@ -81,26 +81,29 @@ npm run dev
 4. 出卡收线索 + 合技解锁汤底
 5. 进入复盘页查看全局可视化
 
-## 部署（Render / 让其他人访问）
+## 部署（让其他人访问）
 
-项目自带 `Dockerfile`（多阶段：Node 构建前端 → Python 运行后端并托管静态文件），
-前端所有请求走相对路径 `/api` 与 `wss://{location.host}/ws`，**换平台无需改任何代码**。
+项目自带 `Dockerfile`（多阶段：Node 构建前端 → Python 运行后端并托管静态文件）。
+前端所有请求走相对路径 `/api`，WebSocket 用 `wss://{location.host}/ws`，
+**换平台无需改任何代码**；后端检测到 `backend/static/index.html` 即自动托管前端。
 
-### 方式 A：Render 蓝图（推荐，最省事）
+### 方式 A：腾讯云 CloudBase 云托管（推荐，无需境外信用卡）
 
-1. 把本仓库推到 GitHub
-2. 打开 [Render Dashboard](https://dashboard.render.com/) → **New +** → **Blueprint**
-3. 选择该仓库，Render 会自动读取 `render.yaml` 并创建 Web Service
-4. 首次构建约 3–6 分钟，完成后拿到 `https://<服务名>.onrender.com` 公开链接
+适合没有可支付美元的卡、但能完成实名认证的场景。赠送 3 个月额度（720 核·小时 + 1440 GB·小时），
+内存态轻量服务完全够用。
 
-`render.yaml` 已配置好：
-- `runtime: docker` + `dockerfilePath: ./Dockerfile`
-- `healthCheckPath: /api/health`
-- `SERVE_STATIC=1`（让 FastAPI 托管前端）
-- `PORT` 由 Render 注入，Dockerfile 的 `CMD` 已读取 `${PORT:-8000}`
+1. 本地构建前端并放入静态目录：
+   ```bash
+   cd frontend && npm run build
+   cd .. && rm -rf backend/static && mkdir -p backend/static && cp -r frontend/dist/* backend/static/
+   ```
+2. 打开 [腾讯云开发控制台](https://console.cloud.tencent.com/tcb)，微信扫码登录并实名认证
+3. 新建环境 → 左侧进入 **云托管** → **新建服务** → **新建版本**
+4. 上传方式选 **上传代码包 → 文件夹 → 项目根目录**，**监听端口填 `8000`**
+5. 等待 3–8 分钟构建完成，在服务详情页取 **默认域名** 即为公开链接
 
-> WebSocket：Render 原生支持，无需额外配置。
-> 免费档空闲 15 分钟后会休眠，首位访问者需等待约 30–60 秒唤醒。
+> 详细步骤（含缩扩容建议、常见问题）见 `docs/部署到腾讯云CloudBase操作指引.md`。
+> 关键：必须用「云托管」而非「云函数」——云函数不支持 WebSocket 长连接。
 
 ### 方式 B：任意 Docker 平台
 
@@ -109,6 +112,18 @@ docker build -t iteach .
 docker run -p 8000:8000 -e SERVE_STATIC=1 -e PORT=8000 iteach
 # 打开 http://localhost:8000
 ```
+
+适用于 Render / Railway / Zeabur / Fly.io / 自建服务器，只需平台注入 `PORT` 并转发 HTTP 与 WebSocket。
+`render.yaml` 已为 Render 准备好（需能完成该平台的身份验证）。
+
+### 环境变量
+
+| 变量 | 作用 | 默认 |
+|---|---|---|
+| `PORT` | 服务监听端口 | `8000` |
+| `SERVE_STATIC` | 是否由后端托管前端 | 检测到部署平台或已有 `backend/static/index.html` 时自动开启 |
+| `ENABLE_DEV_ENDPOINTS` | 是否开放 `/api/dev/*` 调试接口 | 部署环境自动关闭（返回 403），本地开启 |
+
 
 同样适用于 Railway / Fly.io / Zeabur / 自建服务器，只需保证平台注入 `PORT` 并暴露 HTTP。
 

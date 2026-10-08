@@ -1,0 +1,31 @@
+{
+  "$schema": "https://framework-1258016615.tcloudbaseapp.com/schema/latest.json",
+  "version": "2.0",
+  "envId": "{{envId}}",
+  "framework": {
+    "name": "iteach-tangtanju",
+    "plugins": {
+      "cloudrun": {
+        "use": "@cloudbase/framework-plugin-container",
+        "inputs": {
+          "serviceName": "iteach-tangtanju",
+          "servicePath": "/",
+          "localPath": "./",
+          "dockerfilePath": "./Dockerfile",
+          "containerPort": 8000,
+          "cpu": 0.25,
+          "mem": 0.5,
+          "minNum": 0,
+          "maxNum": 2,
+          "policyType": "cpu",
+          "policyThreshold": 60,
+          "customLogs": "stdout",
+          "envVariables": {
+            "SERVE_STATIC": "1",
+            "PYTHONUNBUFFERED": "1"
+          }
+        }
+      }
+    }
+  }
+}
