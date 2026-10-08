@@ -99,18 +99,25 @@ npm run dev
    ```
 2. 打开 [腾讯云开发控制台](https://console.cloud.tencent.com/tcb)，微信扫码登录并实名认证
 3. 新建环境 → 左侧进入 **云托管** → **新建服务** → **新建版本**
-4. 上传方式选 **上传代码包 → 文件夹 → 项目根目录**，**监听端口填 `8000`**
-5. 等待 3–8 分钟构建完成，在服务详情页取 **默认域名** 即为公开链接
+4. 上传方式选 **上传代码包**，**服务端口填 `8080`**（⚠️ 不能填 8000，见下方说明）
+5. 等待 1–3 分钟构建完成，在服务详情页取 **默认域名** 即为公开链接
+
+> **⚠️ 端口必须是 8080**：CloudBase 云托管的健康检查探针固定探测 `8080`，
+> 且「更多配置」中**没有探针端口设置项**。若容器监听其他端口，会报
+> `Liveness probe failed: dial tcp ...:8080: connection refused` 导致部署失败。
+> 因此本项目的 `Dockerfile` 已将 `EXPOSE` / `ENV PORT` / `CMD` 全部设为 `8080`。
 
 > 详细步骤（含缩扩容建议、常见问题）见 `docs/部署到腾讯云CloudBase操作指引.md`。
 > 关键：必须用「云托管」而非「云函数」——云函数不支持 WebSocket 长连接。
+
+**已部署实例**：`https://iteach-tangtanju-324749-10-1501854179.sh.run.tcloudbase.com`
 
 ### 方式 B：任意 Docker 平台
 
 ```bash
 docker build -t iteach .
-docker run -p 8000:8000 -e SERVE_STATIC=1 -e PORT=8000 iteach
-# 打开 http://localhost:8000
+docker run -p 8080:8080 -e SERVE_STATIC=1 iteach
+# 打开 http://localhost:8080
 ```
 
 适用于 Render / Railway / Zeabur / Fly.io / 自建服务器，只需平台注入 `PORT` 并转发 HTTP 与 WebSocket。
@@ -120,7 +127,7 @@ docker run -p 8000:8000 -e SERVE_STATIC=1 -e PORT=8000 iteach
 
 | 变量 | 作用 | 默认 |
 |---|---|---|
-| `PORT` | 服务监听端口 | `8000` |
+| `PORT` | 服务监听端口 | `8080`（CloudBase 探针端口；其他平台注入时以注入值为准） |
 | `SERVE_STATIC` | 是否由后端托管前端 | 检测到部署平台或已有 `backend/static/index.html` 时自动开启 |
 | `ENABLE_DEV_ENDPOINTS` | 是否开放 `/api/dev/*` 调试接口 | 部署环境自动关闭（返回 403），本地开启 |
 

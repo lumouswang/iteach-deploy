@@ -12,7 +12,7 @@
           "servicePath": "/",
           "localPath": "./",
           "dockerfilePath": "./Dockerfile",
-          "containerPort": 8000,
+          "containerPort": 8080,
           "cpu": 0.25,
           "mem": 0.5,
           "minNum": 0,
