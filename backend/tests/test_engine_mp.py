@@ -1,5 +1,6 @@
 """G3 引擎层双人回合校验测试。"""
 import pytest
+from game.state import GamePhase
 from main import (
     room_manager, game_engine, question_judge, deck_engine
 )
@@ -15,9 +16,10 @@ def mp_room():
 
 
 def test_ask_question_turn_check_blocks_other_player(mp_room):
-    """非 turn 玩家的提问被拒。"""
+    """非 turn 玩家的提问被拒（须先处于提问阶段，否则会先撞 phase 校验）。"""
     alice = mp_room.players[0]["user_id"]
     bob = mp_room.players[1]["user_id"]
+    mp_room.phase = GamePhase.QUESTIONING
     mp_room.turn_player_id = alice
 
     r = game_engine.ask_question(mp_room, "Q01", question_judge, player_id=bob)
@@ -38,20 +40,25 @@ def test_ask_question_advance_turn_after_action(mp_room):
 
 
 def test_per_player_question_budget(mp_room):
-    """双人模式下每位玩家有独立 5 次提问预算。"""
-    mp_room.phase = __import__("game.state", fromlist=["GamePhase"]).GamePhase.QUESTIONING
+    """双人模式下每位玩家有独立提问预算（questions_per_player）。"""
+    from tests.conftest import MAX_Q
+    mp_room.phase = GamePhase.QUESTIONING
     alice = mp_room.players[0]["user_id"]
     mp_room.turn_player_id = alice
+    mp_room.questions_per_player[alice] = MAX_Q
 
     r = game_engine.ask_question(mp_room, "Q01", question_judge, player_id=alice)
     assert r["ok"]
-    assert r["questions_remaining"] == 4
+    # 预算从各自额度扣减，而非全局 questions_remaining
+    assert mp_room.questions_per_player[alice] == MAX_Q - 1
 
-    # alice 跑完 4 次后第 5 次被拒
+    # 把 alice 的剩余预算压到 1，再问一次仍应成功
     mp_room.questions_per_player[alice] = 1
     mp_room.turn_player_id = alice
     r = game_engine.ask_question(mp_room, "Q02", question_judge, player_id=alice)
     assert r["ok"]
+    assert mp_room.questions_per_player[alice] == 0
+    # 预算耗尽后再次提问被拒
     mp_room.turn_player_id = alice
     r = game_engine.ask_question(mp_room, "Q03", question_judge, player_id=alice)
     assert r["ok"] is False

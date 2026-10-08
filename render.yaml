@@ -1,0 +1,27 @@
+# ============ Render 部署蓝图 (Blueprint) ============
+# 用法：把本仓库推到 GitHub，在 Render 里选 "New +" → "Blueprint"，
+#       选中该仓库即可自动读取本文件并创建服务。
+# 文档：https://render.com/docs/blueprint-spec
+#
+# 说明：
+#   - 使用仓库自带的多阶段 Dockerfile（Node 构建前端 → Python 跑后端并托管静态文件）
+#   - env=docker 时 Render 会注入 PORT，Dockerfile 的 CMD 已读取 ${PORT:-8000}
+#   - WebSocket 由 Render 原生支持，无需额外配置（前端用 location.host 拼 wss://）
+#   - healthCheckPath 与后端 /api/health 对应
+
+services:
+  - type: web
+    name: iteach-tangtanju
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: SERVE_STATIC
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # PORT 由 Render 自动注入，此处不显式设置

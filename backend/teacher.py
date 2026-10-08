@@ -288,16 +288,16 @@ class TeacherDashboard:
         my_clues = [c for c in room.clues_log if c.player_id == user_id]
         my_questions = [q for q in room.questions_log if getattr(q, "player_id", None) == user_id]
         my_negations = [q for q in room.negation_board if getattr(q, "player_id", None) == user_id]
-        my_combos = [c for c in room.combo_history if getattr(c, "player_id", None) == user_id]
+        # combo_history 是 Dict 列表（非 dataclass），身份键为 by_player，出卡键为 cards
+        my_combos = [c for c in room.combo_history if c.get("by_player") == user_id]
 
         # 已点亮武将（用过 / 合技过的卡）
         used_cards = set()
         for c in my_clues:
-            if hasattr(c, "card_id"):
+            if getattr(c, "card_id", None):
                 used_cards.add(c.card_id)
         for cmb in my_combos:
-            if hasattr(cmb, "card_ids"):
-                used_cards.update(cmb.card_ids)
+            used_cards.update(cmb.get("cards") or [])
 
         # 思维风格判定
         style = self._infer_thinking_style(my_questions, my_combos)
@@ -313,7 +313,7 @@ class TeacherDashboard:
                 "questions_asked": len(my_questions),
                 "clues_found": len(my_clues),
                 "negations": len(my_negations),
-                "combos_succeeded": len([c for c in my_combos if getattr(c, "success", True)]),
+                "combos_succeeded": len(my_combos),
                 "cards_used": len(used_cards),
                 "cards_total": len(self._cards.get("cards", [])),
                 "layers_unlocked": [l for l in room.unlocked_layers],
@@ -350,7 +350,7 @@ class TeacherDashboard:
 
         style_map = {
             "物质类": "📐 分析型（聚焦物质结构）",
-            "环境变量类": "�️ 条件型（关注环境变化）",
+            "环境变量类": "🌤️ 条件型（关注环境变化）",
             "力学系统类": "⚙️ 系统型（强调整体平衡）",
         }
         return style_map.get(dominant, f"混合型（{dominant}）")
@@ -440,7 +440,7 @@ class TeacherDashboard:
             heatmap[uid]["clues"] += 1
 
         for cmb in room.combo_history:
-            uid = getattr(cmb, "player_id", "unknown")
+            uid = cmb.get("by_player") or "unknown"
             heatmap[uid]["combos"] += 1
 
         # 转成前端友好的数组格式（含 user_name）
@@ -639,12 +639,12 @@ class TeacherDashboard:
                 my_clues = [c for c in room.clues_log if getattr(c, "player_id", None) == user_id]
                 my_questions = [q for q in room.questions_log if getattr(q, "player_id", None) == user_id]
                 my_negations = [q for q in room.negation_board if getattr(q, "player_id", None) == user_id]
-                my_combos = [c for c in room.combo_history if getattr(c, "player_id", None) == user_id]
+                my_combos = [c for c in room.combo_history if c.get("by_player") == user_id]
 
                 clues = len(my_clues)
                 questions = len(my_questions)
                 negations = len(my_negations)
-                combos = len([c for c in my_combos if getattr(c, "success", True)])
+                combos = len(my_combos)
                 layers = len(room.unlocked_layers)
 
                 # 评分公式

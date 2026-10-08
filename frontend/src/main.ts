@@ -14,11 +14,13 @@ app.use(ElementPlus)
 app.config.errorHandler = (err: unknown, instance, info) => {
   const msg = err instanceof Error ? err.message : String(err)
   console.error('VUE_ERROR:', err, info)
-  // 也在页面上显示
-  const el = document.createElement('div')
-  el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:12px;z-index:999999;font-family:monospace;font-size:13px;'
-  el.innerText = `🚨 Vue Error: ${msg}\n${info || ''}`
-  document.body.appendChild(el)
+  // 开发模式下把错误直接显示在页面上，便于定位；生产环境仅记录 console
+  if (import.meta.env.DEV) {
+    const el = document.createElement('div')
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:12px;z-index:999999;font-family:monospace;font-size:13px;'
+    el.innerText = `🚨 Vue Error: ${msg}\n${info || ''}`
+    document.body.appendChild(el)
+  }
 }
 
 app.mount('#app')

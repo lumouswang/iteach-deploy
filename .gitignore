@@ -21,6 +21,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# ===== 构建产物（Dockerfile 内会重新构建，不入库）=====
+backend/static/
+
 # ===== IDE / OS =====
 .vscode/
 .idea/

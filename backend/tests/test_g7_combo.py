@@ -27,9 +27,10 @@ def test_g7_combo_requires_g7_used_enforced_in_mp(mp_room):
     game_engine.play_single_card(mp_room, "G1_xuxiake", deck_engine, player_id=bob)
     # Alice 不出 G7，直接合技
     mp_room.turn_player_id = alice
-    r = game_engine.try_unlock_layer(mp_room, ["G7_lishizhen", "G1_xuxiake"], deck_engine, player_id=alice)
+    r = game_engine.try_unlock_layer(mp_room, ["G7_xuguangqi", "G1_xuxiake"], deck_engine, player_id=alice)
     assert r["ok"] is False
-    assert "G7李时珍" in r["error"]
+    # 报错使用武将中文名而非 id
+    assert "徐光启" in r["error"]
 
 
 def test_g7_combo_g7_used_then_succeeds(mp_room):
@@ -40,28 +41,30 @@ def test_g7_combo_g7_used_then_succeeds(mp_room):
 
     # Alice 自己出 G7 一次（拿到 1 条线索）
     mp_room.turn_player_id = alice
-    game_engine.play_single_card(mp_room, "G7_lishizhen", deck_engine, player_id=alice)
+    game_engine.play_single_card(mp_room, "G7_xuguangqi", deck_engine, player_id=alice)
     # Bob 出 G1
     mp_room.turn_player_id = bob
     game_engine.play_single_card(mp_room, "G1_xuxiake", deck_engine, player_id=bob)
     # Alice 合技
     mp_room.turn_player_id = alice
-    r = game_engine.try_unlock_layer(mp_room, ["G7_lishizhen", "G1_xuxiake"], deck_engine, player_id=alice)
+    r = game_engine.try_unlock_layer(mp_room, ["G7_xuguangqi", "G1_xuxiake"], deck_engine, player_id=alice)
     assert r["ok"] is True
     assert r["unlock_layer"] == "ultimate"
 
 
 def test_g7_combo_other_card_not_used_blocked(mp_room):
-    """链结合技：另一张卡必须也用过。"""
+    """链结合技：另一张卡也必须由另一人出过（双人 owner 校验先于 G7 校验）。"""
     alice = mp_room.players[0]["user_id"]
     bob = mp_room.players[1]["user_id"]
     mp_room.unlocked_layers = ["phenomenon", "condition", "microscopic"]
 
     # Alice 出 G7（满足 G7 自己已用）
     mp_room.turn_player_id = alice
-    game_engine.play_single_card(mp_room, "G7_lishizhen", deck_engine, player_id=alice)
-    # Bob 不出 G1，直接合技
+    game_engine.play_single_card(mp_room, "G7_xuguangqi", deck_engine, player_id=alice)
+    # Bob 不出 G1，直接由 Alice 单独合技 → 应被拒
     mp_room.turn_player_id = alice
-    r = game_engine.try_unlock_layer(mp_room, ["G7_lishizhen", "G1_xuxiake"], deck_engine, player_id=alice)
+    r = game_engine.try_unlock_layer(mp_room, ["G7_xuguangqi", "G1_xuxiake"], deck_engine, player_id=alice)
     assert r["ok"] is False
-    assert "G1_xuxiake" in r["error"] or "必须先出过" in r["error"]
+    # 拒绝原因可能是"两张卡需分属两人"，也可能是"另一张卡必须先出过"
+    assert ("两人" in r["error"] or "分属" in r["error"]
+            or "G1_xuxiake" in r["error"] or "必须先出过" in r["error"])

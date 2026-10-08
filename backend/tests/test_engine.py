@@ -1,23 +1,29 @@
-"""游戏引擎核心规则测试 — 12 用例覆盖 B1/B2 修复回归 + 状态机关键分支。"""
+"""游戏引擎核心规则测试 — 覆盖状态机关键分支 + 层锁/合技回归。"""
 import pytest
 from game.state import GamePhase
+from tests.conftest import MAX_Q
 
 
 # ============ 提问阶段 ============
 
-def test_ask_in_intro_auto_advances_to_questioning(engine, fresh_room, judge):
-    """开局前置阶段提问一次后自动 → QUESTIONING（不是 CARD_PLAY）"""
+def test_ask_in_intro_requires_phase_advance(engine, fresh_room, judge):
+    """INTRO 是开局前置阶段，不能直接提问；需先推进到 QUESTIONING"""
     fresh_room.phase = GamePhase.INTRO
     r = engine.ask_question(fresh_room, "Q01", judge)
-    assert r["ok"] is True
-    assert fresh_room.phase == GamePhase.QUESTIONING
-    assert fresh_room.questions_remaining == 4
-
-
-def test_ask_5_times_advances_to_card_play(engine, fresh_room, judge):
-    """5 次提问耗尽自动 → CARD_PLAY"""
+    assert r["ok"] is False
+    assert "提问阶段" in r["error"]
+    # 推进后即可正常提问
     fresh_room.phase = GamePhase.QUESTIONING
-    for i, qid in enumerate(["Q01", "Q02", "Q03", "Q04", "Q05"]):
+    r2 = engine.ask_question(fresh_room, "Q01", judge)
+    assert r2["ok"] is True
+    assert fresh_room.questions_remaining == MAX_Q - 1
+
+
+def test_ask_until_exhausted_advances_to_card_play(engine, fresh_room, judge):
+    """提问次数耗尽自动 → CARD_PLAY"""
+    fresh_room.phase = GamePhase.QUESTIONING
+    qids = [f"Q{i:02d}" for i in range(1, MAX_Q + 1)]
+    for i, qid in enumerate(qids):
         r = engine.ask_question(fresh_room, qid, judge)
         assert r["ok"], f"ask #{i+1} failed: {r}"
     assert fresh_room.questions_remaining == 0
@@ -34,14 +40,13 @@ def test_ask_6th_blocked(engine, fresh_room, judge):
 
 
 def test_ask_negation_goes_to_negation_board(engine, fresh_room, judge):
-    """点"否"的提问自动进入否决板"""
+    """答"否"的提问自动进入否决板（Q01 的答案是"否"）"""
     fresh_room.phase = GamePhase.QUESTIONING
-    # Q02 answer is "否" (radiation cooling)
-    r = engine.ask_question(fresh_room, "Q02", judge)
+    r = engine.ask_question(fresh_room, "Q01", judge)
     assert r["ok"]
     assert r["qa"]["is_negation"] is True
     assert len(fresh_room.negation_board) == 1
-    assert fresh_room.negation_board[0].qid == "Q02"
+    assert fresh_room.negation_board[0].qid == "Q01"
 
 
 # ============ 出卡阶段 (B2 修复) ============
@@ -88,10 +93,10 @@ def test_unlock_phenomenon_layer_happy_path(engine, fresh_room, deck):
 
 
 def test_unlock_microscopic_without_condition_blocked(engine, fresh_room, deck):
-    """跳过现象/条件层直接打微观层 → 被层锁拒绝"""
+    """跳过现象层直接打微观层 → 被层锁拒绝"""
     fresh_room.phase = GamePhase.CARD_PLAY
-    # 不解锁 phenomenon/condition 直接解锁 microscopic（宋应星+徐光启 → microscopic）
-    r = engine.try_unlock_layer(fresh_room, ["G3_songyingxing", "G4_xuguangqi"], deck)
+    # 微观层合技 = 祖冲之 + 李时珍；此刻 phenomenon 尚未解锁
+    r = engine.try_unlock_layer(fresh_room, ["G3_zuchongzhi", "G4_lishizhen"], deck)
     assert r["ok"] is False
     assert "现象层" in r["error"] or "线索不足" in r["error"]
 
@@ -99,7 +104,7 @@ def test_unlock_microscopic_without_condition_blocked(engine, fresh_room, deck):
 def test_wrong_combo_blocked(engine, fresh_room, deck):
     """两张不能配对的卡不能合技"""
     fresh_room.phase = GamePhase.CARD_PLAY
-    r = engine.try_unlock_layer(fresh_room, ["G1_xuxiake", "G7_lishizhen"], deck)
+    r = engine.try_unlock_layer(fresh_room, ["G1_xuxiake", "G7_xuguangqi"], deck)
     assert r["ok"] is False
 
 
@@ -113,8 +118,8 @@ def test_clue_attribution_only_fills_combo_cards(engine, fresh_room, deck):
     fresh_room.phase = GamePhase.CARD_PLAY
 
     # 先单卡出两张碎片（不参与合技）— 这些线索应该保持 layer=None
-    engine.play_single_card(fresh_room, "G5_zouchongzhi", deck)  # 它不在 G1+G2 combo 里
-    engine.play_single_card(fresh_room, "G6_mozi", deck)          # 它也不在
+    engine.play_single_card(fresh_room, "G3_zuchongzhi", deck)  # 它不在 G1+G2 combo 里
+    engine.play_single_card(fresh_room, "G5_mozi", deck)          # 它也不在
     assert all(c.layer is None for c in fresh_room.clues_log)
 
     # 再出 G1 (combo 参与卡，但不参与合一)
@@ -128,8 +133,8 @@ def test_clue_attribution_only_fills_combo_cards(engine, fresh_room, deck):
     # 检验：G1 的最新一条线索应被归到 phenomenon，其他保持 None
     g1_clues = [c for c in fresh_room.clues_log if c.card_id == "G1_xuxiake"]
     g2_clues = [c for c in fresh_room.clues_log if c.card_id == "G2_shenkuo"]
-    g5_clues = [c for c in fresh_room.clues_log if c.card_id == "G5_zouchongzhi"]
-    g6_clues = [c for c in fresh_room.clues_log if c.card_id == "G6_mozi"]
+    g5_clues = [c for c in fresh_room.clues_log if c.card_id == "G3_zuchongzhi"]
+    g6_clues = [c for c in fresh_room.clues_log if c.card_id == "G5_mozi"]
 
     assert g1_clues[-1].layer == "phenomenon", "G1 最后一条应被归 phenomenon"
     # 其他非 combo 卡应不受影响

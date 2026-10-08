@@ -49,18 +49,18 @@ def test_api_g7_combo_requires_g7_used(client, rm):
     room = rm.get_room(room_id)
     room.phase = GamePhase.CARD_PLAY
     # Alice 出 G7
-    client.post("/api/card/use", json={"room_id": room_id, "card_id": "G7_lishizhen", "player_id": alice})
+    client.post("/api/card/use", json={"room_id": room_id, "card_id": "G7_xuguangqi", "player_id": alice})
     # Bob 出 G1
     rm.get_room(room_id).turn_player_id = bob
     client.post("/api/card/use", json={"room_id": room_id, "card_id": "G1_xuxiake", "player_id": bob})
     # Alice 回合：合技 G7 + G1 → G7 自己已用过 1 次，应允许
     rm.get_room(room_id).turn_player_id = alice
-    r = client.post("/api/card/combo", json={"room_id": room_id, "cards": ["G7_lishizhen", "G1_xuxiake"], "player_id": alice})
+    r = client.post("/api/card/combo", json={"room_id": room_id, "cards": ["G7_xuguangqi", "G1_xuxiake"], "player_id": alice})
     # 前提层未解锁 → 返 400 但不是 "G7 必须先出过"
     assert r.status_code == 400, r.text
     body = r.json()
-    # 错误信息应不包含 "G7李时珍必须先出过"
-    assert "G7李时珍必须先出过" not in body.get("detail", "")
+    # 错误信息不应是"徐光启必须先出过"（因为 G7 确实由 alice 出过）
+    assert "徐光启必须先出过" not in body.get("detail", "")
 
 
 def test_api_g7_combo_g7_not_used_blocked(client, rm):
@@ -77,9 +77,10 @@ def test_api_g7_combo_g7_not_used_blocked(client, rm):
     rm.get_room(room_id).turn_player_id = bob
     client.post("/api/card/use", json={"room_id": room_id, "card_id": "G1_xuxiake", "player_id": bob})
     rm.get_room(room_id).turn_player_id = alice
-    r = client.post("/api/card/combo", json={"room_id": room_id, "cards": ["G7_lishizhen", "G1_xuxiake"], "player_id": alice})
+    r = client.post("/api/card/combo", json={"room_id": room_id, "cards": ["G7_xuguangqi", "G1_xuxiake"], "player_id": alice})
     assert r.status_code == 400
-    assert "G7李时珍" in r.json().get("detail", "")
+    # 报错使用武将中文名而非 id
+    assert "徐光启" in r.json().get("detail", "")
 
 
 # ============ P1 #10：重连 ============

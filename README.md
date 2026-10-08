@@ -1,14 +1,14 @@
 # 汤探局 · SaltLake Detective
 
 > 基于"武将卡分工 + 海龟汤"机制的高中理综跨学科交互课件
-> 面向高一理科综合题训练，覆盖化学·物理·生物·地理 4 学科 9 个高考考点
+> 面向高一理科综合题训练，覆盖化学·物理·生物·地理 4 学科 14 个高考考点
 
 ## 项目简介
 
 「汤探局」是一个**完整的课堂教学课件**，不是游戏平台。它以山西运城盐湖为真实情境，通过：
 
 - **7 张武将手牌** = 7 个学科思维分工
-- **受限标准化提问**（5 次上限，三类选项）
+- **受限标准化提问**（单局 9 次上限，三类选项）
 - **双人卡组合 + 层锁汤底**（4 层必须按序解锁）
 - **即时分段复盘 + 全局可视化**
 
@@ -27,7 +27,7 @@ ITeach/
 ├── data/                              # 核心数据资产
 │   ├── generals_highschool.json      # 7 张武将卡
 │   ├── salt_lake_fossil.json         # 4 层汤底真相
-│   ├── questions_salt_lake.json      # 20 道标准化提问
+│   ├── questions_salt_lake.json      # 32 道标准化提问
 │   └── knowledge_map.json            # 学科考点总图
 ├── backend/                           # FastAPI 后端
 │   ├── requirements.txt
@@ -81,6 +81,37 @@ npm run dev
 4. 出卡收线索 + 合技解锁汤底
 5. 进入复盘页查看全局可视化
 
+## 部署（Render / 让其他人访问）
+
+项目自带 `Dockerfile`（多阶段：Node 构建前端 → Python 运行后端并托管静态文件），
+前端所有请求走相对路径 `/api` 与 `wss://{location.host}/ws`，**换平台无需改任何代码**。
+
+### 方式 A：Render 蓝图（推荐，最省事）
+
+1. 把本仓库推到 GitHub
+2. 打开 [Render Dashboard](https://dashboard.render.com/) → **New +** → **Blueprint**
+3. 选择该仓库，Render 会自动读取 `render.yaml` 并创建 Web Service
+4. 首次构建约 3–6 分钟，完成后拿到 `https://<服务名>.onrender.com` 公开链接
+
+`render.yaml` 已配置好：
+- `runtime: docker` + `dockerfilePath: ./Dockerfile`
+- `healthCheckPath: /api/health`
+- `SERVE_STATIC=1`（让 FastAPI 托管前端）
+- `PORT` 由 Render 注入，Dockerfile 的 `CMD` 已读取 `${PORT:-8000}`
+
+> WebSocket：Render 原生支持，无需额外配置。
+> 免费档空闲 15 分钟后会休眠，首位访问者需等待约 30–60 秒唤醒。
+
+### 方式 B：任意 Docker 平台
+
+```bash
+docker build -t iteach .
+docker run -p 8000:8000 -e SERVE_STATIC=1 -e PORT=8000 iteach
+# 打开 http://localhost:8000
+```
+
+同样适用于 Railway / Fly.io / Zeabur / 自建服务器，只需保证平台注入 `PORT` 并暴露 HTTP。
+
 ## 核心机制亮点（答辩用）
 
 ### 1. 武将卡 = 取景器（不是道具）
@@ -102,10 +133,10 @@ npm run dev
 4 层汤底必须**严格按序解锁**：
 | 层 | 名 | 对应布鲁姆 | 解锁合技 |
 |---|---|---|---|
-| 1 | 现象层 | 识记 | 地理合技（徐霞客+沈括）|
-| 2 | 条件层 | 理解 | 理数合技（祖冲之+墨子）|
-| 3 | 微观层 | 分析 | 转化合技（宋应星+徐光启）|
-| 4 | 终极层 | 评价/创造 | 链结合技（李时珍+任意）|
+| 1 | 现象层 | 识记 | 地理合技（徐霞客 + 沈括）|
+| 2 | 条件层 | 理解 | 理数合技（墨子 + 宋应星）|
+| 3 | 微观层 | 分析 | 转化合技（祖冲之 + 李时珍）|
+| 4 | 终极层 | 评价/创造 | 链结合技（徐光启 + 任意已用 1 张）|
 
 跳过 → 系统拒绝"线索不足，请先解开上一层"。
 
@@ -148,6 +179,4 @@ npm run dev
 ## 许可
 
 仅供教学竞赛使用。
-
-<!-- force-rebuild 2026-09-02 21:49:57 -->
 

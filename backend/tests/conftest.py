@@ -18,6 +18,9 @@ from main import (
     deck_engine,
 )
 
+# 与生产一致：房间提问上限取自 script 的 max_questions（当前为 9）
+MAX_Q = SCRIPT.get("max_questions", 10)
+
 
 @pytest.fixture
 def client():
@@ -34,8 +37,8 @@ def rm():
 
 @pytest.fixture
 def fresh_room(rm):
-    """创建一个独立的房间，避免用例互相影响"""
-    room = rm.create_room("tester")
+    """创建一个独立的房间，避免用例互相影响（提问上限与生产一致）"""
+    room = rm.create_room("tester", max_questions=MAX_Q)
     game_engine.start_game(room)
     return room
 
